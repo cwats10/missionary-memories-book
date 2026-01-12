@@ -22,7 +22,8 @@ interface CreatePageDialogProps {
 }
 
 const MAX_IMAGES = 3;
-const MAX_CHARACTERS = 1000;
+const MAX_CHARACTERS_NO_IMAGES = 1700;
+const MAX_CHARACTERS_WITH_IMAGES = 750;
 
 export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProps) {
   const [open, setOpen] = useState(false);
@@ -100,6 +101,8 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
   };
 
   const canAddMore = imageFiles.length < MAX_IMAGES;
+  const hasImages = imageFiles.length > 0;
+  const maxCharacters = hasImages ? MAX_CHARACTERS_WITH_IMAGES : MAX_CHARACTERS_NO_IMAGES;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -184,19 +187,25 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
             <div className="grid gap-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="content">Your Message</Label>
-                <span className={`text-xs ${formData.content.length > MAX_CHARACTERS ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {formData.content.length}/{MAX_CHARACTERS}
+                <span className={`text-xs ${formData.content.length > maxCharacters ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {formData.content.length}/{maxCharacters}
                 </span>
               </div>
               <Textarea
                 id="content"
                 placeholder="Write your heartfelt message here..."
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value.slice(0, MAX_CHARACTERS) })}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value.slice(0, maxCharacters) })}
                 rows={6}
-                maxLength={MAX_CHARACTERS}
+                maxLength={maxCharacters}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                {hasImages 
+                  ? `Character limit reduced to ${MAX_CHARACTERS_WITH_IMAGES} when images are added.`
+                  : `You have a ${MAX_CHARACTERS_NO_IMAGES} character limit, but adding images reduces it to ${MAX_CHARACTERS_WITH_IMAGES}.`
+                }
+              </p>
             </div>
           </div>
           <DialogFooter>
