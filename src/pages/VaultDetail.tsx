@@ -14,7 +14,7 @@ import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
 import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
 import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 
 const VaultDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -99,34 +99,16 @@ const VaultDetail = () => {
           </Button>
 
           {/* Vault Header */}
-          <div className="mb-8">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="font-serif text-3xl mb-1">Mission Memory Vault</h1>
-                <p className="text-muted-foreground">
-                  {vault.recipient_name}
-                  {vault.mission_name && ` • ${vault.mission_name}`}
-                </p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <BookPreview 
-                  recipientName={vault.recipient_name}
-                  missionName={vault.mission_name}
-                  serviceStartDate={vault.service_start_date}
-                  serviceEndDate={vault.service_end_date}
-                  pages={pages} 
-                />
-                <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />
-                <CheckoutDialog 
-                  vaultTitle="Mission Memory Vault" 
-                  pageCount={pages.length} 
-                />
-                <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+          <div className="mb-10">
+            <h1 className="font-serif text-4xl mb-2">Mission Memory Vault</h1>
+            <p className="text-xl text-muted-foreground mb-1">
+              {vault.recipient_name}
+            </p>
+            {vault.mission_name && (
+              <p className="text-muted-foreground">
+                {vault.mission_name}
+              </p>
+            )}
             {vault.description && (
               <p className="text-muted-foreground mt-4 max-w-2xl">
                 {vault.description}
@@ -134,19 +116,21 @@ const VaultDetail = () => {
             )}
           </div>
 
-          {/* Stats Bar */}
-          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-border">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">
-                <strong>{pages.length}</strong> {pages.length === 1 ? 'page' : 'pages'}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-muted px-2 py-1 rounded">
-                {vault.status.charAt(0).toUpperCase() + vault.status.slice(1)}
-              </span>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 mb-10 pb-10 border-b border-border">
+            <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
+            <BookPreview 
+              recipientName={vault.recipient_name}
+              missionName={vault.mission_name}
+              serviceStartDate={vault.service_start_date}
+              serviceEndDate={vault.service_end_date}
+              pages={pages} 
+            />
+            <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />
+            <CheckoutDialog 
+              vaultTitle="Mission Memory Vault" 
+              pageCount={pages.length} 
+            />
           </div>
 
           {/* Title Page Section */}
