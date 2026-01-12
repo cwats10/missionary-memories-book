@@ -1,17 +1,14 @@
 import { brandConfig } from "@/config/brandConfig";
-import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
     <footer className="py-16 px-6 border-t border-border">
       <div className="max-w-4xl mx-auto">
-        {/* Logo - small, understated */}
+        {/* Brand Name - understated */}
         <div className="flex justify-center mb-8">
-          <img 
-            src={logo} 
-            alt={brandConfig.logo.alt}
-            className="h-48 w-auto opacity-70"
-          />
+          <span className="font-serif text-3xl tracking-tight opacity-70">
+            {brandConfig.name}
+          </span>
         </div>
 
         {/* Tagline */}

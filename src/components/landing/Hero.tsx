@@ -1,16 +1,13 @@
 import { brandConfig } from "@/config/brandConfig";
-import logo from "@/assets/logo.png";
 
 const Hero = () => {
   return (
     <section className="min-h-[85vh] flex flex-col items-center justify-center px-6 py-24">
-      {/* Logo - restrained and secondary to content */}
+      {/* Brand Name - large and prominent */}
       <div className="mb-4 opacity-90">
-        <img 
-          src={logo} 
-          alt={brandConfig.logo.alt}
-          className="h-[480px] md:h-[640px] w-auto"
-        />
+        <h2 className="font-serif text-6xl md:text-8xl lg:text-9xl tracking-tight text-center">
+          {brandConfig.name}
+        </h2>
       </div>
 
       {/* Headline - feels like a title, not marketing copy */}
