@@ -23,6 +23,7 @@ interface EditPageDialogProps {
 }
 
 const MAX_IMAGES = 3;
+const MAX_CHARACTERS = 1000;
 
 export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -221,13 +222,19 @@ export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDia
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-content">Your Message</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="edit-content">Your Message</Label>
+                <span className={`text-xs ${formData.content.length > MAX_CHARACTERS ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {formData.content.length}/{MAX_CHARACTERS}
+                </span>
+              </div>
               <Textarea
                 id="edit-content"
                 placeholder="Write your heartfelt message here..."
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value.slice(0, MAX_CHARACTERS) })}
                 rows={6}
+                maxLength={MAX_CHARACTERS}
                 required
               />
             </div>

@@ -22,6 +22,7 @@ interface CreatePageDialogProps {
 }
 
 const MAX_IMAGES = 3;
+const MAX_CHARACTERS = 1000;
 
 export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProps) {
   const [open, setOpen] = useState(false);
@@ -181,13 +182,19 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="content">Your Message</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="content">Your Message</Label>
+                <span className={`text-xs ${formData.content.length > MAX_CHARACTERS ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {formData.content.length}/{MAX_CHARACTERS}
+                </span>
+              </div>
               <Textarea
                 id="content"
                 placeholder="Write your heartfelt message here..."
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value.slice(0, MAX_CHARACTERS) })}
                 rows={6}
+                maxLength={MAX_CHARACTERS}
                 required
               />
             </div>
