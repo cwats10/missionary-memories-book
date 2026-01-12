@@ -149,6 +149,7 @@ const VaultDetail = () => {
               serviceStartDate={vault.service_start_date}
               serviceEndDate={vault.service_end_date}
               pages={pages}
+              vaultType={vault.vault_type}
             />
             <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />
             <CheckoutDialog vaultTitle="Mission Memory Vault" pageCount={pages.length} />
