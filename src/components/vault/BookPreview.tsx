@@ -339,7 +339,7 @@ function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
 
       <h3 className="font-serif text-lg md:text-xl mb-2 text-foreground">{page.title || "Untitled Memory"}</h3>
 
-      {page.content && <p className="text-sm text-muted-foreground leading-relaxed flex-1 overflow-hidden">{page.content}</p>}
+      {page.content && <p className="text-sm text-muted-foreground leading-relaxed flex-1 overflow-y-auto">{page.content}</p>}
     </div>
   );
 }
