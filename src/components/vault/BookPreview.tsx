@@ -177,7 +177,7 @@ export function BookPreview({
       <div className="flex h-full">
         <div className="w-1/2 bg-background border-r border-border p-4 overflow-hidden">
           {leftPage ? (
-            <PageContent page={leftPage} pageNumber={pageIndex + 1} />
+            <PageContent page={leftPage} />
           ) : (
             <div className="h-full flex items-center justify-center">
               <p className="text-muted-foreground/40 text-sm">Blank page</p>
@@ -187,7 +187,7 @@ export function BookPreview({
 
         <div className="w-1/2 bg-background p-4 overflow-hidden">
           {rightPage ? (
-            <PageContent page={rightPage} pageNumber={pageIndex + 2} />
+            <PageContent page={rightPage} />
           ) : (
             <div className="h-full flex items-center justify-center">
               <p className="text-muted-foreground/40 text-sm">Blank page</p>
@@ -214,8 +214,8 @@ export function BookPreview({
       </DialogTrigger>
 
       <DialogContent className="max-w-5xl h-[80vh] p-0 gap-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 py-4 border-b border-border bg-secondary/30">
-          <div className="flex items-center justify-between">
+        <DialogHeader className="px-6 py-3 border-b border-border bg-secondary/30 flex-shrink-0">
+          <div className="flex items-center justify-between pr-8">
             <DialogTitle className="font-serif">Book Preview</DialogTitle>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>
@@ -315,7 +315,7 @@ export function BookPreview({
   );
 }
 
-function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
+function PageContent({ page }: { page: Page }) {
   const imageAlt = page.title ? `Photo for ${page.title}` : "Memory photo";
   const images = page.image_urls?.length > 0 ? page.image_urls : page.image_url ? [page.image_url] : [];
   const hasImages = images.length > 0;
@@ -323,15 +323,12 @@ function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Page number - minimal space */}
-      <div className="text-[10px] text-muted-foreground/40 mb-2 text-center">{pageNumber}</div>
-
-      {/* Title - compact */}
-      <h3 className="font-serif text-base md:text-lg mb-2 text-foreground leading-tight">{page.title || "Untitled Memory"}</h3>
+      {/* Title - centered */}
+      <h3 className="font-serif text-base md:text-lg mb-3 text-foreground leading-tight text-center">{page.title || "Untitled Memory"}</h3>
 
       {/* Images - dynamic sizing based on content presence */}
       {hasImages && (
-        <div className={`mb-2 flex-shrink grid gap-1.5 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        <div className={`mb-3 flex-shrink grid gap-1.5 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
           {images.map((url, index) => (
             <img
               key={index}
@@ -348,9 +345,9 @@ function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
         </div>
       )}
 
-      {/* Content text - fills remaining space */}
+      {/* Content text - DM Serif Display font, fills remaining space */}
       {hasContent && (
-        <p className="text-xs md:text-sm text-muted-foreground leading-relaxed flex-1 overflow-hidden">
+        <p className="font-serif text-sm md:text-base text-muted-foreground leading-relaxed flex-1 overflow-hidden">
           {page.content}
         </p>
       )}
