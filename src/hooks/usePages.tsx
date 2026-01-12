@@ -141,6 +141,57 @@ export function usePages(vaultId: string | undefined) {
     return { error: null };
   };
 
+  const approvePage = async (pageId: string) => {
+    const { error } = await supabase
+      .from('pages')
+      .update({ status: 'approved' })
+      .eq('id', pageId);
+
+    if (error) {
+      console.error('Error approving page:', error);
+      toast.error('Failed to approve page');
+      return { error };
+    }
+
+    toast.success('Page approved!');
+    await fetchPages();
+    return { error: null };
+  };
+
+  const rejectPage = async (pageId: string) => {
+    const { error } = await supabase
+      .from('pages')
+      .update({ status: 'rejected' })
+      .eq('id', pageId);
+
+    if (error) {
+      console.error('Error rejecting page:', error);
+      toast.error('Failed to reject page');
+      return { error };
+    }
+
+    toast.success('Page rejected');
+    await fetchPages();
+    return { error: null };
+  };
+
+  const submitPage = async (pageId: string) => {
+    const { error } = await supabase
+      .from('pages')
+      .update({ status: 'submitted' })
+      .eq('id', pageId);
+
+    if (error) {
+      console.error('Error submitting page:', error);
+      toast.error('Failed to submit page');
+      return { error };
+    }
+
+    toast.success('Page submitted for review!');
+    await fetchPages();
+    return { error: null };
+  };
+
   return {
     pages,
     loading,
@@ -148,6 +199,9 @@ export function usePages(vaultId: string | undefined) {
     updatePage,
     deletePage,
     reorderPages,
+    approvePage,
+    rejectPage,
+    submitPage,
     refetch: fetchPages,
   };
 }

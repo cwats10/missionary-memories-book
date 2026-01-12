@@ -2,7 +2,7 @@ import { Page } from '@/hooks/usePages';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Trash2, Edit } from 'lucide-react';
+import { GripVertical, Trash2, Edit, Check, X, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -21,15 +21,31 @@ interface PageCardProps {
   pageNumber: number;
   onDelete: (id: string) => Promise<void>;
   onEdit?: (page: Page) => void;
+  onApprove?: (id: string) => Promise<{ error: unknown }>;
+  onReject?: (id: string) => Promise<{ error: unknown }>;
+  onSubmit?: (id: string) => Promise<{ error: unknown }>;
+  isOwner?: boolean;
   isDragging?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export function PageCard({ page, pageNumber, onDelete, onEdit, isDragging, dragHandleProps }: PageCardProps) {
+export function PageCard({ 
+  page, 
+  pageNumber, 
+  onDelete, 
+  onEdit, 
+  onApprove,
+  onReject,
+  onSubmit,
+  isOwner,
+  isDragging, 
+  dragHandleProps 
+}: PageCardProps) {
   const statusColors: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
-    submitted: 'bg-amber-100 text-amber-800',
-    approved: 'bg-green-100 text-green-800',
+    submitted: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
+    approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+    rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
   };
 
   return (
@@ -79,7 +95,48 @@ export function PageCard({ page, pageNumber, onDelete, onEdit, isDragging, dragH
                     {page.content}
                   </p>
                 )}
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex items-center gap-2 pt-2 flex-wrap">
+                  {/* Owner approval controls */}
+                  {isOwner && page.status === 'submitted' && (
+                    <>
+                      {onApprove && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="gap-1.5 bg-green-600 hover:bg-green-700"
+                          onClick={() => onApprove(page.id)}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          Approve
+                        </Button>
+                      )}
+                      {onReject && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
+                          onClick={() => onReject(page.id)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Reject
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Contributor submit button */}
+                  {!isOwner && page.status === 'draft' && onSubmit && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => onSubmit(page.id)}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      Submit for Review
+                    </Button>
+                  )}
+
                   {onEdit && (
                     <Button
                       variant="ghost"
