@@ -4,8 +4,8 @@ const Hero = () => {
   return (
     <section className="min-h-[85vh] flex flex-col items-center justify-center px-6 py-24">
       {/* Brand Name - large and prominent */}
-      <div className="mb-4 opacity-90">
-        <h2 className="font-serif text-6xl md:text-8xl lg:text-9xl tracking-tight text-center">
+      <div className="mb-4">
+        <h2 className="font-serif text-6xl md:text-8xl lg:text-9xl tracking-tight text-center text-foreground">
           {brandConfig.name}
         </h2>
       </div>
