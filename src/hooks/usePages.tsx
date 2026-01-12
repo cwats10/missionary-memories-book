@@ -20,6 +20,7 @@ export interface CreatePageInput {
   vault_id: string;
   title?: string;
   content?: string;
+  image_url?: string;
 }
 
 export function usePages(vaultId: string | undefined) {
@@ -62,6 +63,7 @@ export function usePages(vaultId: string | undefined) {
         contributor_id: user.id,
         title: input.title || null,
         content: input.content || null,
+        image_url: input.image_url || null,
         page_order: nextOrder,
       })
       .select()
