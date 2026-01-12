@@ -12,6 +12,7 @@ import { InviteDialog } from '@/components/vault/InviteDialog';
 import { BookPreview } from '@/components/vault/BookPreview';
 import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
 import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
+import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 
@@ -19,7 +20,7 @@ const VaultDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { vault, loading: vaultLoading } = useVault(id);
+  const { vault, loading: vaultLoading, refetch: refetchVault } = useVault(id);
   const { pages, loading: pagesLoading, createPage, updatePage, deletePage, reorderPages, approvePage, rejectPage, submitPage } = usePages(id);
   
   const [editingPage, setEditingPage] = useState<Page | null>(null);
@@ -146,6 +147,12 @@ const VaultDetail = () => {
                 {vault.status.charAt(0).toUpperCase() + vault.status.slice(1)}
               </span>
             </div>
+          </div>
+
+          {/* Title Page Section */}
+          <div className="mb-8">
+            <h2 className="font-serif text-xl mb-4">Title Page</h2>
+            <TitlePageCard vault={vault} isOwner={isOwner} onUpdate={refetchVault} />
           </div>
 
           {/* Pages Section */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Vault } from './useVaults';
 
@@ -6,29 +6,29 @@ export function useVault(vaultId: string | undefined) {
   const [vault, setVault] = useState<Vault | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchVault = async () => {
-      if (!vaultId) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('vaults')
-        .select('*')
-        .eq('id', vaultId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching vault:', error);
-      }
-      
-      setVault(data);
+  const fetchVault = useCallback(async () => {
+    if (!vaultId) {
       setLoading(false);
-    };
+      return;
+    }
 
-    fetchVault();
+    const { data, error } = await supabase
+      .from('vaults')
+      .select('*')
+      .eq('id', vaultId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching vault:', error);
+    }
+    
+    setVault(data);
+    setLoading(false);
   }, [vaultId]);
 
-  return { vault, loading };
+  useEffect(() => {
+    fetchVault();
+  }, [fetchVault]);
+
+  return { vault, loading, refetch: fetchVault };
 }
