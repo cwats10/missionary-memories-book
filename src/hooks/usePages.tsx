@@ -114,12 +114,40 @@ export function usePages(vaultId: string | undefined) {
     return { error: null };
   };
 
+  const reorderPages = async (reorderedPages: Page[]) => {
+    // Optimistically update local state
+    setPages(reorderedPages);
+
+    // Update each page's order in the database
+    const updates = reorderedPages.map((page, index) => ({
+      id: page.id,
+      page_order: index,
+    }));
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('pages')
+        .update({ page_order: update.page_order })
+        .eq('id', update.id);
+
+      if (error) {
+        console.error('Error reordering pages:', error);
+        toast.error('Failed to reorder pages');
+        await fetchPages(); // Revert on error
+        return { error };
+      }
+    }
+
+    return { error: null };
+  };
+
   return {
     pages,
     loading,
     createPage,
     updatePage,
     deletePage,
+    reorderPages,
     refetch: fetchPages,
   };
 }

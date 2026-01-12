@@ -2,7 +2,7 @@ import { Page } from '@/hooks/usePages';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Trash2, Edit } from 'lucide-react';
+import { GripVertical, Trash2, Edit } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -21,9 +21,11 @@ interface PageCardProps {
   pageNumber: number;
   onDelete: (id: string) => Promise<void>;
   onEdit?: (page: Page) => void;
+  isDragging?: boolean;
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export function PageCard({ page, pageNumber, onDelete, onEdit }: PageCardProps) {
+export function PageCard({ page, pageNumber, onDelete, onEdit, isDragging, dragHandleProps }: PageCardProps) {
   const statusColors: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
     submitted: 'bg-amber-100 text-amber-800',
@@ -31,9 +33,17 @@ export function PageCard({ page, pageNumber, onDelete, onEdit }: PageCardProps) 
   };
 
   return (
-    <Card className="group hover:shadow-md transition-shadow overflow-hidden">
+    <Card className={`group hover:shadow-md transition-shadow overflow-hidden ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}>
       <CardContent className="p-0">
         <div className="flex">
+          {/* Drag handle */}
+          <div 
+            {...dragHandleProps}
+            className="flex-shrink-0 w-8 flex items-center justify-center bg-muted/30 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+
           {/* Image thumbnail */}
           {page.image_url && (
             <div className="flex-shrink-0 w-32 h-32">

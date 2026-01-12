@@ -6,7 +6,7 @@ import { usePages, Page } from '@/hooks/usePages';
 import { Button } from '@/components/ui/button';
 import { brandConfig } from '@/config/brandConfig';
 import { CreatePageDialog } from '@/components/vault/CreatePageDialog';
-import { PageCard } from '@/components/vault/PageCard';
+import { SortablePageList } from '@/components/vault/SortablePageList';
 import { EditPageDialog } from '@/components/vault/EditPageDialog';
 import { InviteDialog } from '@/components/vault/InviteDialog';
 import { BookPreview } from '@/components/vault/BookPreview';
@@ -19,7 +19,7 @@ const VaultDetail = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { vault, loading: vaultLoading } = useVault(id);
-  const { pages, loading: pagesLoading, createPage, updatePage, deletePage } = usePages(id);
+  const { pages, loading: pagesLoading, createPage, updatePage, deletePage, reorderPages } = usePages(id);
   
   const [editingPage, setEditingPage] = useState<Page | null>(null);
 
@@ -173,17 +173,17 @@ const VaultDetail = () => {
               <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
             </div>
           ) : (
-            <div className="space-y-4">
-              {pages.map((page, index) => (
-                <PageCard
-                  key={page.id}
-                  page={page}
-                  pageNumber={index + 1}
-                  onDelete={handleDeletePage}
-                  onEdit={handleEditPage}
-                />
-              ))}
-            </div>
+            <>
+              <p className="text-sm text-muted-foreground mb-4">
+                Drag pages to reorder them in your book
+              </p>
+              <SortablePageList
+                pages={pages}
+                onReorder={reorderPages}
+                onDelete={handleDeletePage}
+                onEdit={handleEditPage}
+              />
+            </>
           )}
         </div>
       </main>
