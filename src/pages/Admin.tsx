@@ -3,8 +3,6 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Button } from '@/components/ui/button';
-import { brandConfig } from '@/config/brandConfig';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
 import { AdminVaultsTab } from '@/components/admin/AdminVaultsTab';
