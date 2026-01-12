@@ -17,8 +17,12 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
   const [currentSpread, setCurrentSpread] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Filter to only show approved pages in the preview
+  const approvedPages = pages.filter(p => p.status === 'approved');
+
   // Book structure: cover, dedication page, then page spreads (2 pages per spread), then back cover
-  const totalSpreads = Math.ceil(pages.length / 2) + 3; // +3 for front cover, dedication, and back cover
+  const contentSpreads = Math.ceil(approvedPages.length / 2);
+  const totalSpreads = contentSpreads + 3; // +3 for front cover, dedication, and back cover
 
   const goToPrevious = () => setCurrentSpread((prev) => Math.max(0, prev - 1));
   const goToNext = () => setCurrentSpread((prev) => Math.min(totalSpreads - 1, prev + 1));
@@ -95,8 +99,8 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
 
     // Content spreads (offset by 2 for cover + dedication)
     const pageIndex = (currentSpread - 2) * 2;
-    const leftPage = pages[pageIndex];
-    const rightPage = pages[pageIndex + 1];
+    const leftPage = approvedPages[pageIndex];
+    const rightPage = approvedPages[pageIndex + 1];
 
     return (
       <div className="flex h-full">
@@ -142,13 +146,13 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
                 {currentSpread === 0 
                   ? 'Cover' 
                   : currentSpread === 1
-                    ? 'Dedication'
+                    ? 'Title Page'
                     : currentSpread === totalSpreads - 1 
                       ? 'Back Cover' 
-                      : `Pages ${(currentSpread - 2) * 2 + 1}-${Math.min((currentSpread - 2) * 2 + 2, pages.length)}`}
+                      : `Pages ${(currentSpread - 2) * 2 + 1}-${Math.min((currentSpread - 2) * 2 + 2, approvedPages.length)}`}
               </span>
               <span className="text-muted-foreground/50">•</span>
-              <span>{pages.length} total pages</span>
+              <span>{approvedPages.length} memory {approvedPages.length === 1 ? 'page' : 'pages'}</span>
             </div>
           </div>
         </DialogHeader>
