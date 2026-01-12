@@ -5,11 +5,11 @@ const Hero = () => {
   return (
     <section className="min-h-[85vh] flex flex-col items-center justify-center px-6 py-24">
       {/* Logo - restrained and secondary to content */}
-      <div className="mb-16 opacity-90">
+      <div className="mb-4 opacity-90">
         <img 
           src={logo} 
           alt={brandConfig.logo.alt}
-          className="h-60 md:h-80 w-auto"
+          className="h-[480px] md:h-[640px] w-auto"
         />
       </div>
 
