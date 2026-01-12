@@ -68,6 +68,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          image_urls: string[] | null
           page_order: number
           status: string
           title: string | null
@@ -80,6 +81,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          image_urls?: string[] | null
           page_order?: number
           status?: string
           title?: string | null
@@ -92,6 +94,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          image_urls?: string[] | null
           page_order?: number
           status?: string
           title?: string | null

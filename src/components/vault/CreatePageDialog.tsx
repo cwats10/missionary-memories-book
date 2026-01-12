@@ -21,6 +21,8 @@ interface CreatePageDialogProps {
   onCreatePage: (input: CreatePageInput) => Promise<{ error?: Error | null }>;
 }
 
+const MAX_IMAGES = 3;
+
 export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,46 +30,54 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
     title: '',
     content: '',
   });
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadImage, uploading } = useImageUpload();
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (!file.type.startsWith('image/')) {
-      return;
-    }
+    const remainingSlots = MAX_IMAGES - imageFiles.length;
+    const filesToAdd = files.slice(0, remainingSlots).filter(file => file.type.startsWith('image/'));
 
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
+    if (filesToAdd.length === 0) return;
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
+    // Add new files
+    setImageFiles(prev => [...prev, ...filesToAdd]);
+
+    // Create previews for new files
+    filesToAdd.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviews(prev => [...prev, e.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    let imageUrl: string | undefined;
+    const imageUrls: string[] = [];
 
-    // Upload image if selected
-    if (imageFile) {
-      const url = await uploadImage(imageFile);
+    // Upload all images
+    for (const file of imageFiles) {
+      const url = await uploadImage(file);
       if (url) {
-        imageUrl = url;
+        imageUrls.push(url);
       }
     }
 
@@ -75,7 +85,7 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
       vault_id: vaultId,
       title: formData.title || undefined,
       content: formData.content || undefined,
-      image_url: imageUrl,
+      image_urls: imageUrls.length > 0 ? imageUrls : undefined,
     });
 
     setLoading(false);
@@ -83,10 +93,12 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
     if (!result.error) {
       setOpen(false);
       setFormData({ title: '', content: '' });
-      setImageFile(null);
-      setImagePreview(null);
+      setImageFiles([]);
+      setImagePreviews([]);
     }
   };
+
+  const canAddMore = imageFiles.length < MAX_IMAGES;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -117,35 +129,44 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
             
             {/* Image Upload */}
             <div className="grid gap-2">
-              <Label>Photo (optional)</Label>
-              {imagePreview ? (
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-8 w-8"
-                    onClick={removeImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+              <Label>Photos (up to {MAX_IMAGES})</Label>
+              
+              {/* Image previews grid */}
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative aspect-square">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ) : (
+              )}
+
+              {/* Upload button */}
+              {canAddMore && (
                 <div
-                  className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Image className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <Image className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    Click to upload a photo
+                    {imagePreviews.length === 0 ? 'Click to upload photos' : 'Add another photo'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    JPG, PNG up to 5MB
+                    {imagePreviews.length}/{MAX_IMAGES} photos • JPG, PNG up to 5MB each
                   </p>
                 </div>
               )}
@@ -155,6 +176,7 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
                 accept="image/*"
                 className="hidden"
                 onChange={handleImageSelect}
+                multiple
               />
             </div>
 

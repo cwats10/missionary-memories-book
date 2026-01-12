@@ -317,19 +317,23 @@ export function BookPreview({
 
 function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
   const imageAlt = page.title ? `Photo for ${page.title}` : "Memory photo";
+  const images = page.image_urls?.length > 0 ? page.image_urls : page.image_url ? [page.image_url] : [];
 
   return (
     <div className="h-full flex flex-col">
       <div className="text-xs text-muted-foreground/50 mb-4 text-center">{pageNumber}</div>
 
-      {page.image_url && (
-        <div className="mb-4 flex-shrink-0">
-          <img
-            src={page.image_url}
-            alt={imageAlt}
-            loading="lazy"
-            className="w-full h-32 md:h-40 object-cover rounded"
-          />
+      {images.length > 0 && (
+        <div className={`mb-4 flex-shrink-0 grid gap-2 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          {images.map((url, index) => (
+            <img
+              key={index}
+              src={url}
+              alt={`${imageAlt} ${index + 1}`}
+              loading="lazy"
+              className={`w-full object-cover rounded ${images.length === 1 ? 'h-32 md:h-40' : 'h-20 md:h-28'}`}
+            />
+          ))}
         </div>
       )}
 

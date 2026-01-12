@@ -68,10 +68,22 @@ export function PageCard({
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
 
-          {/* Image thumbnail */}
-          {page.image_url && (
-            <div className="flex-shrink-0 w-32 h-32">
-              <img src={page.image_url} alt="" className="w-full h-full object-cover" />
+          {/* Image thumbnails */}
+          {(page.image_urls?.length > 0 || page.image_url) && (
+            <div className="flex-shrink-0 flex">
+              {(page.image_urls?.length > 0 ? page.image_urls : [page.image_url]).slice(0, 3).map((url, index) => (
+                <div 
+                  key={index} 
+                  className={`w-24 h-32 ${index > 0 ? '-ml-2' : ''}`}
+                  style={{ zIndex: 3 - index }}
+                >
+                  <img 
+                    src={url!} 
+                    alt="" 
+                    className="w-full h-full object-cover border-2 border-background shadow-sm"
+                  />
+                </div>
+              ))}
             </div>
           )}
 
