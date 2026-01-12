@@ -331,7 +331,7 @@ function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
               src={url}
               alt={`${imageAlt} ${index + 1}`}
               loading="lazy"
-              className={`w-full object-cover rounded ${images.length === 1 ? 'h-32 md:h-40' : 'h-20 md:h-28'}`}
+              className={`w-full object-contain rounded bg-muted/30 ${images.length === 1 ? 'max-h-40 md:max-h-48' : 'max-h-24 md:max-h-32'}`}
             />
           ))}
         </div>
