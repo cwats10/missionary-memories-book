@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      pages: {
+        Row: {
+          content: string | null
+          contributor_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          page_order: number
+          status: string
+          title: string | null
+          updated_at: string
+          vault_id: string
+        }
+        Insert: {
+          content?: string | null
+          contributor_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          page_order?: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          vault_id: string
+        }
+        Update: {
+          content?: string | null
+          contributor_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          page_order?: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -62,6 +109,80 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vault_contributors: {
+        Row: {
+          accepted_at: string | null
+          id: string
+          invited_at: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+          vault_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+          vault_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_contributors_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vaults: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          occasion: string | null
+          owner_id: string
+          recipient_name: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          occasion?: string | null
+          owner_id: string
+          recipient_name: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          occasion?: string | null
+          owner_id?: string
+          recipient_name?: string
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
