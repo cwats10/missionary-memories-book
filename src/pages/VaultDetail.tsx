@@ -11,6 +11,7 @@ import { EditPageDialog } from '@/components/vault/EditPageDialog';
 import { InviteDialog } from '@/components/vault/InviteDialog';
 import { BookPreview } from '@/components/vault/BookPreview';
 import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
+import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 
@@ -104,12 +105,13 @@ const VaultDetail = () => {
                   {vault.occasion && ` • ${vault.occasion}`}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <BookPreview 
                   vaultTitle={vault.title} 
                   recipientName={vault.recipient_name} 
                   pages={pages} 
                 />
+                <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />
                 <CheckoutDialog 
                   vaultTitle={vault.title} 
                   pageCount={pages.length} 
