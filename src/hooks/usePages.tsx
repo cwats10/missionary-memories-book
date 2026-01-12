@@ -175,6 +175,23 @@ export function usePages(vaultId: string | undefined) {
     return { error: null };
   };
 
+  const unapprove = async (pageId: string) => {
+    const { error } = await supabase
+      .from('pages')
+      .update({ status: 'draft' })
+      .eq('id', pageId);
+
+    if (error) {
+      console.error('Error unapproving page:', error);
+      toast.error('Failed to update page');
+      return { error };
+    }
+
+    toast.success('Page moved to drafts');
+    await fetchPages();
+    return { error: null };
+  };
+
   const submitPage = async (pageId: string) => {
     const { error } = await supabase
       .from('pages')
@@ -201,6 +218,7 @@ export function usePages(vaultId: string | undefined) {
     reorderPages,
     approvePage,
     rejectPage,
+    unapprove,
     submitPage,
     refetch: fetchPages,
   };

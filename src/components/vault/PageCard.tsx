@@ -23,6 +23,7 @@ interface PageCardProps {
   onEdit?: (page: Page) => void;
   onApprove?: (id: string) => Promise<{ error: unknown }>;
   onReject?: (id: string) => Promise<{ error: unknown }>;
+  onUnapprove?: (id: string) => Promise<{ error: unknown }>;
   onSubmit?: (id: string) => Promise<{ error: unknown }>;
   isOwner?: boolean;
   isDragging?: boolean;
@@ -35,7 +36,7 @@ export function PageCard({
   onDelete,
   onEdit,
   onApprove,
-  onReject,
+  onUnapprove,
   onSubmit,
   isOwner,
   isDragging,
@@ -46,7 +47,7 @@ export function PageCard({
   const handleToggleApproval = async () => {
     if (isApproved) {
       // Switch from approved to draft
-      onReject?.(page.id);
+      onUnapprove?.(page.id);
     } else {
       // Switch from draft/submitted to approved
       onApprove?.(page.id);
@@ -89,7 +90,7 @@ export function PageCard({
                   </div>
 
                   {/* Approval Toggle for owners/managers */}
-                  {isOwner && onApprove && onReject ? (
+                  {isOwner && onApprove && onUnapprove ? (
                     <div className="flex items-center gap-2">
                       <span
                         className={`text-xs font-medium transition-colors ${

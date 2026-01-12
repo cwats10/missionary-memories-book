@@ -9,19 +9,21 @@ interface SortablePageListProps {
   onEdit: (page: Page) => void;
   onApprove?: (id: string) => Promise<{ error: unknown }>;
   onReject?: (id: string) => Promise<{ error: unknown }>;
+  onUnapprove?: (id: string) => Promise<{ error: unknown }>;
   onSubmit?: (id: string) => Promise<{ error: unknown }>;
   isOwner?: boolean;
 }
 
-export function SortablePageList({ 
-  pages, 
-  onReorder, 
-  onDelete, 
+export function SortablePageList({
+  pages,
+  onReorder,
+  onDelete,
   onEdit,
   onApprove,
   onReject,
+  onUnapprove,
   onSubmit,
-  isOwner
+  isOwner,
 }: SortablePageListProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -44,7 +46,7 @@ export function SortablePageList({
 
   const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
@@ -78,9 +80,7 @@ export function SortablePageList({
           onDrop={(e) => handleDrop(e, index)}
           onDragEnd={handleDragEnd}
           className={`transition-all duration-150 ${
-            dragOverIndex === index && draggedIndex !== index
-              ? 'transform translate-y-1 opacity-70'
-              : ''
+            dragOverIndex === index && draggedIndex !== index ? 'transform translate-y-1 opacity-70' : ''
           } ${draggedIndex === index ? 'opacity-50' : ''}`}
         >
           {dragOverIndex === index && draggedIndex !== null && draggedIndex !== index && (
@@ -93,6 +93,7 @@ export function SortablePageList({
             onEdit={onEdit}
             onApprove={onApprove}
             onReject={onReject}
+            onUnapprove={onUnapprove}
             onSubmit={onSubmit}
             isOwner={isOwner}
             isDragging={draggedIndex === index}
