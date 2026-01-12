@@ -119,7 +119,7 @@ const VaultDetail = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 mb-10 pb-10 border-b border-border">
+          <div className="flex flex-wrap justify-center gap-3 mb-10 pb-10 border-b border-border">
             <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
             <BookPreview 
               recipientName={vault.recipient_name}
