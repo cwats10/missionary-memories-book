@@ -100,17 +100,19 @@ const VaultDetail = () => {
 
           {/* Vault Header */}
           <div className="mb-10">
-            <h1 className="font-serif text-4xl mb-2">Mission Memory Vault</h1>
-            <p className="text-xl text-muted-foreground mb-1">
-              {vault.recipient_name}
-            </p>
-            {vault.mission_name && (
-              <p className="text-muted-foreground">
-                {vault.mission_name}
-              </p>
-            )}
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <h1 className="font-serif text-4xl">Mission Memory Vault</h1>
+              <span className="text-xl text-muted-foreground">
+                {vault.recipient_name}
+              </span>
+              {vault.mission_name && (
+                <span className="text-muted-foreground">
+                  {vault.mission_name}
+                </span>
+              )}
+            </div>
             {vault.description && (
-              <p className="text-muted-foreground mt-4 max-w-2xl">
+              <p className="text-muted-foreground mt-3 max-w-2xl">
                 {vault.description}
               </p>
             )}
