@@ -57,6 +57,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Mission Memory Vault™ Brand Colors
+        bone: "hsl(var(--bone))",
+        charcoal: "hsl(var(--charcoal))",
+        stone: "hsl(var(--stone))",
+        forest: "hsl(var(--forest))",
+        gold: "hsl(var(--gold))",
+      },
+      fontFamily: {
+        serif: ["'Playfair Display'", "Georgia", "serif"],
+        sans: ["'Inter'", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
