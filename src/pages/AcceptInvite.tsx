@@ -51,7 +51,8 @@ const AcceptInvite = () => {
       setAccepting(false);
     } else {
       setSuccess(true);
-      toast.success('You are now a contributor!');
+      const roleLabel = invite?.role === 'coowner' ? 'manager' : 'contributor';
+      toast.success(`You are now a ${roleLabel}!`);
     }
   };
 
@@ -92,7 +93,7 @@ const AcceptInvite = () => {
                 <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
                 <h2 className="font-serif text-2xl mb-2">You're In!</h2>
                 <p className="text-muted-foreground mb-6">
-                  You've been added as a contributor to "{invite?.vaults?.title}".
+                  You've been added as a {invite?.role === 'coowner' ? 'manager' : 'contributor'} to "{invite?.vaults?.title}".
                 </p>
                 <Button onClick={() => navigate(`/vault/${invite?.vault_id}`)}>
                   Go to Vault
@@ -109,7 +110,9 @@ const AcceptInvite = () => {
                   You're Invited!
                 </CardTitle>
                 <CardDescription>
-                  You've been invited to contribute to a memory vault.
+                  {invite?.role === 'coowner' 
+                    ? `You've been invited to be a manager of "${invite?.vaults?.title}"`
+                    : "You've been invited to contribute to a memory vault."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
