@@ -194,21 +194,11 @@ serve(async (req) => {
       
       let yPosition = pageHeight - margin;
 
-      // Page number
-      const pageNum = `Page ${i + 1}`;
-      const pageNumWidth = timesRoman.widthOfTextAtSize(pageNum, 10);
-      contentPage.drawText(pageNum, {
-        x: pageWidth - margin - pageNumWidth,
-        y: margin / 2,
-        size: 10,
-        font: timesRoman,
-        color: rgb(0.6, 0.6, 0.6),
-      });
-
-      // Title
+      // Title - centered, no page numbers
       if (page.title) {
+        const titleWidth = timesRomanBold.widthOfTextAtSize(page.title, 24);
         contentPage.drawText(page.title, {
-          x: margin,
+          x: (pageWidth - titleWidth) / 2,
           y: yPosition,
           size: 24,
           font: timesRomanBold,
@@ -278,13 +268,13 @@ serve(async (req) => {
         yPosition -= maxImageHeight + 20;
       }
 
-      // Content text with word wrapping
+      // Content text with word wrapping - using serif font for body
       if (page.content) {
         const words = page.content.split(' ');
         let currentLine = '';
         const maxLineWidth = pageWidth - (margin * 2);
-        const lineHeight = 18;
-        const fontSize = 12;
+        const lineHeight = 20;
+        const fontSize = 14;
 
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
