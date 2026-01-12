@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { Page } from '@/hooks/usePages';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, BookOpen, X } from 'lucide-react';
-import { brandConfig } from '@/config/brandConfig';
+import { useEffect, useMemo, useCallback, useState } from "react";
+import { Page } from "@/hooks/usePages";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import { brandConfig } from "@/config/brandConfig";
 
 interface BookPreviewProps {
   recipientName: string;
@@ -13,52 +20,68 @@ interface BookPreviewProps {
   pages: Page[];
 }
 
-export function BookPreview({ recipientName, missionName, serviceStartDate, serviceEndDate, pages }: BookPreviewProps) {
+export function BookPreview({
+  recipientName,
+  missionName,
+  serviceStartDate,
+  serviceEndDate,
+  pages,
+}: BookPreviewProps) {
   const [currentSpread, setCurrentSpread] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
   // Filter to only show approved pages in the preview
-  const approvedPages = pages.filter(p => p.status === 'approved');
+  const approvedPages = useMemo(() => pages.filter((p) => p.status === "approved"), [pages]);
 
-  // Book structure: cover, dedication page, then page spreads (2 pages per spread), then back cover
+  // Book structure: cover, title page, content spreads (2 pages/spread), back cover
   const contentSpreads = Math.ceil(approvedPages.length / 2);
-  const totalSpreads = contentSpreads + 3; // +3 for front cover, dedication, and back cover
+  const totalSpreads = contentSpreads + 3;
 
-  const goToPrevious = () => setCurrentSpread((prev) => Math.max(0, prev - 1));
-  const goToNext = () => setCurrentSpread((prev) => Math.min(totalSpreads - 1, prev + 1));
+  const goToPrevious = useCallback(() => {
+    setCurrentSpread((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const goToNext = useCallback(() => {
+    setCurrentSpread((prev) => Math.min(totalSpreads - 1, prev + 1));
+  }, [totalSpreads]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goToPrevious();
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        goToNext();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, goToNext, goToPrevious]);
 
   const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return '';
+    if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
   const getSpreadContent = () => {
     if (currentSpread === 0) {
-      // Front cover - Deep Forest green with brand styling
+      // Front cover
       return (
         <div className="flex h-full">
-          {/* Left side - inside front cover (blank parchment) */}
-          <div className="w-1/2 border-r border-border" style={{ backgroundColor: '#F4F1EC' }} />
-          
-          {/* Right side - front cover */}
-          <div 
-            className="w-1/2 flex flex-col items-center justify-center p-8"
-            style={{ backgroundColor: '#2F3E36' }}
-          >
+          {/* Inside front cover */}
+          <div className="w-1/2 border-r border-border bg-background" />
+
+          {/* Front cover */}
+          <div className="w-1/2 flex flex-col items-center justify-center p-8 bg-accent text-accent-foreground">
             <div className="text-center">
-              <h2 
-                className="text-3xl md:text-4xl mb-4"
-                style={{ fontFamily: '"DM Serif Display", serif', color: '#F4F1EC' }}
-              >
-                Mission Memory Vault
-              </h2>
-              <p 
-                className="text-lg"
-                style={{ fontFamily: '"DM Serif Display", serif', color: '#F4F1EC', opacity: 0.85 }}
-              >
-                {recipientName}
-              </p>
+              <h2 className="font-serif text-3xl md:text-4xl mb-4">Mission Memory Vault</h2>
+              <p className="font-serif text-lg opacity-90">{recipientName}</p>
             </div>
           </div>
         </div>
@@ -66,36 +89,16 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
     }
 
     if (currentSpread === 1) {
-      // Title page with missionary info - parchment background
+      // Title page
       return (
         <div className="flex h-full">
-          {/* Left side - blank parchment */}
-          <div className="w-1/2 border-r border-border" style={{ backgroundColor: '#F4F1EC' }} />
-          
-          {/* Right side - title/info page */}
-          <div 
-            className="w-1/2 flex flex-col items-center justify-center p-8 text-center"
-            style={{ backgroundColor: '#F4F1EC' }}
-          >
-            <h3 
-              className="text-2xl md:text-3xl mb-6"
-              style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A' }}
-            >
-              {recipientName}
-            </h3>
-            {missionName && (
-              <p 
-                className="text-lg mb-2"
-                style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A', opacity: 0.8 }}
-              >
-                {missionName}
-              </p>
-            )}
+          <div className="w-1/2 border-r border-border bg-background" />
+
+          <div className="w-1/2 flex flex-col items-center justify-center p-8 text-center bg-background">
+            <h3 className="font-serif text-2xl md:text-3xl mb-6 text-foreground">{recipientName}</h3>
+            {missionName && <p className="font-serif text-lg mb-2 text-foreground/80">{missionName}</p>}
             {(serviceStartDate || serviceEndDate) && (
-              <p 
-                className="text-base"
-                style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A', opacity: 0.7 }}
-              >
+              <p className="text-base text-foreground/70">
                 {formatDate(serviceStartDate)} — {formatDate(serviceEndDate)}
               </p>
             )}
@@ -105,52 +108,28 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
     }
 
     if (currentSpread === totalSpreads - 1) {
-      // Back cover - Deep Forest green
+      // Back cover
       return (
         <div className="flex h-full">
-          {/* Left side - end page parchment */}
-          <div 
-            className="w-1/2 border-r border-border flex items-center justify-center"
-            style={{ backgroundColor: '#F4F1EC' }}
-          >
-            <p 
-              className="text-sm italic"
-              style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A', opacity: 0.5 }}
-            >
-              End of memories
-            </p>
+          <div className="w-1/2 border-r border-border flex items-center justify-center bg-background">
+            <p className="text-sm italic font-serif text-foreground/50">End of memories</p>
           </div>
-          
-          {/* Right side - back cover */}
-          <div 
-            className="w-1/2 flex flex-col items-center justify-center p-8"
-            style={{ backgroundColor: '#2F3E36' }}
-          >
-            <p 
-              className="text-xl mb-2"
-              style={{ fontFamily: '"DM Serif Display", serif', color: '#F4F1EC' }}
-            >
-              {brandConfig.name}
-            </p>
-            <p 
-              className="text-sm"
-              style={{ color: '#F4F1EC', opacity: 0.7 }}
-            >
-              missionmemoryvault.com
-            </p>
+
+          <div className="w-1/2 flex flex-col items-center justify-center p-8 bg-accent text-accent-foreground">
+            <p className="text-xl mb-2 font-serif">{brandConfig.name}</p>
+            <p className="text-sm opacity-80">missionmemoryvault.com</p>
           </div>
         </div>
       );
     }
 
-    // Content spreads (offset by 2 for cover + dedication)
+    // Content spreads (offset by 2 for cover + title)
     const pageIndex = (currentSpread - 2) * 2;
     const leftPage = approvedPages[pageIndex];
     const rightPage = approvedPages[pageIndex + 1];
 
     return (
       <div className="flex h-full">
-        {/* Left page */}
         <div className="w-1/2 bg-background border-r border-border p-6 overflow-hidden">
           {leftPage ? (
             <PageContent page={leftPage} pageNumber={pageIndex + 1} />
@@ -160,8 +139,7 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
             </div>
           )}
         </div>
-        
-        {/* Right page */}
+
         <div className="w-1/2 bg-background p-6 overflow-hidden">
           {rightPage ? (
             <PageContent page={rightPage} pageNumber={pageIndex + 2} />
@@ -184,47 +162,72 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button variant="outline" size="sm" className="gap-1.5" type="button">
           <BookOpen className="h-4 w-4" />
           Preview Book
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl h-[80vh] p-0 gap-0 overflow-hidden">
+
+      <DialogContent className="max-w-5xl h-[80vh] p-0 gap-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 py-4 border-b border-border bg-secondary/30">
           <div className="flex items-center justify-between">
             <DialogTitle className="font-serif">Book Preview</DialogTitle>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>
-                {currentSpread === 0 
-                  ? 'Cover' 
+                {currentSpread === 0
+                  ? "Cover"
                   : currentSpread === 1
-                    ? 'Title Page'
-                    : currentSpread === totalSpreads - 1 
-                      ? 'Back Cover' 
+                    ? "Title Page"
+                    : currentSpread === totalSpreads - 1
+                      ? "Back Cover"
                       : `Pages ${(currentSpread - 2) * 2 + 1}-${Math.min((currentSpread - 2) * 2 + 2, approvedPages.length)}`}
               </span>
               <span className="text-muted-foreground/50">•</span>
-              <span>{approvedPages.length} memory {approvedPages.length === 1 ? 'page' : 'pages'}</span>
+              <span>
+                {approvedPages.length} memory {approvedPages.length === 1 ? "page" : "pages"}
+              </span>
             </div>
           </div>
+          <DialogDescription className="sr-only">
+            Preview the book cover, title page, and memory pages. Use Next and Previous to turn pages.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Book viewer */}
-        <div className="flex-1 bg-muted/50 flex items-center justify-center p-8">
-          <div className="relative w-full max-w-4xl aspect-[3/2] bg-background rounded-lg shadow-2xl overflow-hidden border border-border">
+        <div className="flex-1 min-h-0 bg-muted/50 flex items-center justify-center p-3 sm:p-4 md:p-6">
+          <div className="relative h-full max-h-full aspect-[3/2] w-auto max-w-full bg-background rounded-lg shadow-2xl overflow-hidden border border-border">
             {/* Book spine effect */}
             <div className="absolute inset-y-0 left-1/2 w-px bg-border -translate-x-1/2 z-10" />
-            <div className="absolute inset-y-0 left-1/2 w-4 -translate-x-1/2 z-0 bg-gradient-to-r from-transparent via-black/5 to-transparent" />
-            
+            <div className="absolute inset-y-0 left-1/2 w-4 -translate-x-1/2 z-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+
             {getSpreadContent()}
+
+            {/* Click-to-turn areas (helps on small screens if footer is clipped) */}
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              <button
+                type="button"
+                aria-label="Previous page spread"
+                onClick={goToPrevious}
+                disabled={currentSpread === 0}
+                className="pointer-events-auto absolute inset-y-0 left-0 w-[22%] disabled:pointer-events-none"
+              />
+              <button
+                type="button"
+                aria-label="Next page spread"
+                onClick={goToNext}
+                disabled={currentSpread === totalSpreads - 1}
+                className="pointer-events-auto absolute inset-y-0 right-0 w-[22%] disabled:pointer-events-none"
+              />
+            </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex items-center justify-between gap-4">
           <Button
             variant="outline"
             size="sm"
+            type="button"
             onClick={goToPrevious}
             disabled={currentSpread === 0}
             className="gap-1"
@@ -232,25 +235,28 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          
-          {/* Progress dots */}
+
           <div className="flex gap-1.5">
             {Array.from({ length: totalSpreads }).map((_, i) => (
               <button
                 key={i}
+                type="button"
+                aria-label={`Go to spread ${i + 1}`}
                 onClick={() => setCurrentSpread(i)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  i === currentSpread 
-                    ? 'bg-primary' 
-                    : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                }`}
+                className={
+                  "w-2 h-2 rounded-full transition-colors " +
+                  (i === currentSpread
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50")
+                }
               />
             ))}
           </div>
-          
+
           <Button
             variant="outline"
             size="sm"
+            type="button"
             onClick={goToNext}
             disabled={currentSpread === totalSpreads - 1}
             className="gap-1"
@@ -265,35 +271,27 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
 }
 
 function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
+  const imageAlt = page.title ? `Photo for ${page.title}` : "Memory photo";
+
   return (
     <div className="h-full flex flex-col">
-      {/* Page number */}
-      <div className="text-xs text-muted-foreground/50 mb-4 text-center">
-        {pageNumber}
-      </div>
-      
-      {/* Image */}
+      <div className="text-xs text-muted-foreground/50 mb-4 text-center">{pageNumber}</div>
+
       {page.image_url && (
         <div className="mb-4 flex-shrink-0">
           <img
             src={page.image_url}
-            alt=""
+            alt={imageAlt}
+            loading="lazy"
             className="w-full h-32 md:h-40 object-cover rounded"
           />
         </div>
       )}
-      
-      {/* Title */}
-      <h3 className="font-serif text-lg md:text-xl mb-2 text-foreground">
-        {page.title || 'Untitled Memory'}
-      </h3>
-      
-      {/* Content */}
-      {page.content && (
-        <p className="text-sm text-muted-foreground leading-relaxed flex-1 overflow-hidden">
-          {page.content}
-        </p>
-      )}
+
+      <h3 className="font-serif text-lg md:text-xl mb-2 text-foreground">{page.title || "Untitled Memory"}</h3>
+
+      {page.content && <p className="text-sm text-muted-foreground leading-relaxed flex-1 overflow-hidden">{page.content}</p>}
     </div>
   );
 }
+
