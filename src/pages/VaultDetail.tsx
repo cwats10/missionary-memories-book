@@ -9,6 +9,7 @@ import { CreatePageDialog } from '@/components/vault/CreatePageDialog';
 import { PageCard } from '@/components/vault/PageCard';
 import { EditPageDialog } from '@/components/vault/EditPageDialog';
 import { InviteDialog } from '@/components/vault/InviteDialog';
+import { BookPreview } from '@/components/vault/BookPreview';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 
@@ -103,6 +104,11 @@ const VaultDetail = () => {
                 </p>
               </div>
               <div className="flex gap-2">
+                <BookPreview 
+                  vaultTitle={vault.title} 
+                  recipientName={vault.recipient_name} 
+                  pages={pages} 
+                />
                 <InviteDialog vaultId={vault.id} vaultTitle={vault.title} />
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <Settings className="h-4 w-4" />
