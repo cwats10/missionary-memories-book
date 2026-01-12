@@ -199,6 +199,7 @@ export type Database = {
       }
       vaults: {
         Row: {
+          contributor_page_limit: number
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -215,6 +216,7 @@ export type Database = {
           vault_type: string
         }
         Insert: {
+          contributor_page_limit?: number
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -231,6 +233,7 @@ export type Database = {
           vault_type?: string
         }
         Update: {
+          contributor_page_limit?: number
           cover_image_url?: string | null
           created_at?: string
           description?: string | null

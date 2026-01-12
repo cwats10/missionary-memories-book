@@ -15,8 +15,15 @@ import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
 import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
 import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type PageFilter = 'all' | 'approved' | 'draft';
 
@@ -24,7 +31,7 @@ const VaultDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { vault, loading: vaultLoading, refetch: refetchVault } = useVault(id);
+  const { vault, loading: vaultLoading, refetch: refetchVault, updateVault } = useVault(id);
   const {
     pages,
     loading: pagesLoading,
@@ -42,6 +49,15 @@ const VaultDetail = () => {
   const [pageFilter, setPageFilter] = useState<PageFilter>('all');
 
   const isOwner = vault?.owner_id === user?.id;
+
+  // Count pages created by current user for contributor limit check
+  const userPageCount = useMemo(() => {
+    if (!user) return 0;
+    return pages.filter(p => p.contributor_id === user.id).length;
+  }, [pages, user]);
+
+  const contributorPageLimit = vault?.contributor_page_limit || 1;
+  const canCreateMorePages = isOwner || userPageCount < contributorPageLimit;
 
   const filteredPages = useMemo(() => {
     switch (pageFilter) {
@@ -155,6 +171,33 @@ const VaultDetail = () => {
             <CheckoutDialog vaultTitle="Mission Memory Vault" pageCount={pages.length} />
           </div>
 
+          {/* Vault Settings - Owner only */}
+          {isOwner && (
+            <div className="mb-8 p-4 bg-muted/30 rounded-lg border border-border">
+              <div className="flex items-center gap-2 mb-3">
+                <Settings className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-medium text-sm">Vault Settings</h3>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="text-sm text-muted-foreground">Pages per contributor:</label>
+                <Select
+                  value={String(vault.contributor_page_limit)}
+                  onValueChange={(value) => updateVault({ contributor_page_limit: parseInt(value) })}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="4">4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {/* Title Page Section */}
           <div className="mb-8">
             <h2 className="font-serif text-xl mb-4">Title Page</h2>
@@ -191,7 +234,13 @@ const VaultDetail = () => {
                   </button>
                 ))}
               </div>
-              <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
+              {canCreateMorePages ? (
+                <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  You've created {userPageCount}/{contributorPageLimit} pages
+                </div>
+              )}
             </div>
           </div>
 
@@ -221,7 +270,14 @@ const VaultDetail = () => {
                   ? 'Start adding memories to this vault. You can also invite friends and family to contribute.'
                   : `There are no ${pageFilter} pages to display.`}
               </p>
-              {pageFilter === 'all' && <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />}
+              {pageFilter === 'all' && canCreateMorePages && (
+                <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
+              )}
+              {pageFilter === 'all' && !canCreateMorePages && (
+                <p className="text-sm text-muted-foreground">
+                  You've reached your limit of {contributorPageLimit} {contributorPageLimit === 1 ? 'page' : 'pages'}.
+                </p>
+              )}
             </div>
           ) : (
             <>

@@ -53,6 +53,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
     service_start_date: '',
     service_end_date: '',
     description: '',
+    contributor_page_limit: 1,
   });
 
   const handleTypeSelect = (type: VaultType) => {
@@ -72,6 +73,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
       service_end_date: formData.service_end_date || undefined,
       description: formData.description || undefined,
       vault_type: formData.vault_type,
+      contributor_page_limit: formData.contributor_page_limit,
     });
 
     setLoading(false);
@@ -86,6 +88,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
         service_start_date: '',
         service_end_date: '',
         description: '',
+        contributor_page_limit: 1,
       });
     }
   };
@@ -233,6 +236,31 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={2}
                 />
+              </div>
+              
+              {/* Contributor Page Limit */}
+              <div className="grid gap-2">
+                <Label>How many pages can each contributor create?</Label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, contributor_page_limit: num })}
+                      className={cn(
+                        "flex-1 py-2 px-4 rounded-lg border-2 font-medium transition-all",
+                        formData.contributor_page_limit === num
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:border-primary/50 text-muted-foreground"
+                      )}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Contributors will be able to create up to {formData.contributor_page_limit} {formData.contributor_page_limit === 1 ? 'page' : 'pages'} each.
+                </p>
               </div>
             </div>
             <DialogFooter>
