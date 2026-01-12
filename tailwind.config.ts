@@ -66,6 +66,7 @@ export default {
       },
       fontFamily: {
         serif: ["'DM Serif Display'", "Georgia", "serif"],
+        "serif-text": ["'DM Serif Text'", "Georgia", "serif"],
         sans: ["'Inter'", "system-ui", "sans-serif"],
       },
       borderRadius: {
