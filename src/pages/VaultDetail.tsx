@@ -101,24 +101,26 @@ const VaultDetail = () => {
           <div className="mb-8">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="font-serif text-3xl mb-1">{vault.title}</h1>
+                <h1 className="font-serif text-3xl mb-1">Mission Memory Vault</h1>
                 <p className="text-muted-foreground">
-                  For {vault.recipient_name}
-                  {vault.occasion && ` • ${vault.occasion}`}
+                  {vault.recipient_name}
+                  {vault.mission_name && ` • ${vault.mission_name}`}
                 </p>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <BookPreview 
-                  vaultTitle={vault.title} 
-                  recipientName={vault.recipient_name} 
+                  recipientName={vault.recipient_name}
+                  missionName={vault.mission_name}
+                  serviceStartDate={vault.service_start_date}
+                  serviceEndDate={vault.service_end_date}
                   pages={pages} 
                 />
                 <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />
                 <CheckoutDialog 
-                  vaultTitle={vault.title} 
+                  vaultTitle="Mission Memory Vault" 
                   pageCount={pages.length} 
                 />
-                <InviteDialog vaultId={vault.id} vaultTitle={vault.title} />
+                <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <Settings className="h-4 w-4" />
                 </Button>

@@ -9,6 +9,9 @@ export interface Vault {
   title: string;
   description: string | null;
   recipient_name: string;
+  mission_name: string | null;
+  service_start_date: string | null;
+  service_end_date: string | null;
   occasion: string | null;
   status: string;
   cover_image_url: string | null;
@@ -19,6 +22,9 @@ export interface Vault {
 export interface CreateVaultInput {
   title: string;
   recipient_name: string;
+  mission_name?: string;
+  service_start_date?: string;
+  service_end_date?: string;
   description?: string;
   occasion?: string;
 }
@@ -59,6 +65,9 @@ export function useVaults() {
         owner_id: user.id,
         title: input.title,
         recipient_name: input.recipient_name,
+        mission_name: input.mission_name || null,
+        service_start_date: input.service_start_date || null,
+        service_end_date: input.service_end_date || null,
         description: input.description || null,
         occasion: input.occasion || null,
       })
