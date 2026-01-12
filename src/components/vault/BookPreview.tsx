@@ -347,7 +347,7 @@ function PageContent({ page }: { page: Page }) {
 
       {/* Content text - maximized space, smaller line height */}
       {hasContent && (
-        <p className="font-serif-text text-[10px] md:text-xs text-muted-foreground leading-snug flex-1 overflow-hidden">
+        <p className="font-sans text-[10px] md:text-xs text-muted-foreground leading-snug flex-1 overflow-hidden">
           {page.content}
         </p>
       )}
