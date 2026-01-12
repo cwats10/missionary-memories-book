@@ -35,27 +35,47 @@ export function usePages(vaultId: string | undefined) {
     if (!user || !vaultId) return;
     
     setLoading(true);
-    const { data, error } = await supabase
+    
+    // Fetch pages first
+    const { data: pagesData, error } = await supabase
       .from('pages')
-      .select(`
-        *,
-        profiles!pages_contributor_id_fkey (full_name, email)
-      `)
+      .select('*')
       .eq('vault_id', vaultId)
       .order('page_order', { ascending: true });
 
     if (error) {
       console.error('Error fetching pages:', error);
       toast.error('Failed to load pages');
-    } else {
-      // Map the joined data to include contributor_name and ensure image_urls is always an array
-      const pagesWithNames = (data || []).map((page: any) => ({
-        ...page,
-        image_urls: page.image_urls || [],
-        contributor_name: page.profiles?.full_name || page.profiles?.email || null,
-      }));
-      setPages(pagesWithNames);
+      setLoading(false);
+      return;
     }
+
+    // Get unique contributor IDs
+    const contributorIds = [...new Set((pagesData || []).map(p => p.contributor_id))];
+    
+    // Fetch profiles for contributors
+    let profilesMap: Record<string, string> = {};
+    if (contributorIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', contributorIds);
+      
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap[profile.user_id] = profile.full_name || profile.email;
+        });
+      }
+    }
+
+    // Map pages with contributor names
+    const pagesWithNames = (pagesData || []).map((page) => ({
+      ...page,
+      image_urls: page.image_urls || [],
+      contributor_name: profilesMap[page.contributor_id] || null,
+    }));
+    
+    setPages(pagesWithNames);
     setLoading(false);
   };
 
