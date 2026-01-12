@@ -130,7 +130,15 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        // Default to the title page spread when opening
+        if (open) setCurrentSpread(1);
+        else setCurrentSpread(0);
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <BookOpen className="h-4 w-4" />
