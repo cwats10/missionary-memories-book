@@ -64,7 +64,10 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
   return (
     <Dialog open={open} onOpenChange={(o) => o ? setOpen(true) : handleClose()}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button 
+          className="gap-2 text-white hover:opacity-90"
+          style={{ backgroundColor: '#2F3E36' }}
+        >
           <ShoppingCart className="h-4 w-4" />
           Order Book
         </Button>
