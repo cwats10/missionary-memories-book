@@ -323,12 +323,12 @@ function PageContent({ page }: { page: Page }) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Title - centered */}
-      <h3 className="font-serif text-base md:text-lg mb-3 text-foreground leading-tight text-center">{page.title || "Untitled Memory"}</h3>
+      {/* Title - centered, compact */}
+      <h3 className="font-serif text-sm md:text-base mb-2 text-foreground leading-tight text-center">{page.title || "Untitled Memory"}</h3>
 
-      {/* Images - dynamic sizing based on content presence */}
+      {/* Images - smaller when content present to maximize text space */}
       {hasImages && (
-        <div className={`mb-3 flex-shrink grid gap-1.5 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        <div className={`mb-2 flex-shrink-0 grid gap-1 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
           {images.map((url, index) => (
             <img
               key={index}
@@ -337,7 +337,7 @@ function PageContent({ page }: { page: Page }) {
               loading="lazy"
               className={`w-full object-contain rounded bg-muted/30 ${
                 hasContent 
-                  ? (images.length === 1 ? 'max-h-28 md:max-h-32' : 'max-h-20 md:max-h-24')
+                  ? (images.length === 1 ? 'max-h-20 md:max-h-24' : 'max-h-14 md:max-h-18')
                   : (images.length === 1 ? 'max-h-48 md:max-h-56' : 'max-h-32 md:max-h-40')
               }`}
             />
@@ -345,9 +345,9 @@ function PageContent({ page }: { page: Page }) {
         </div>
       )}
 
-      {/* Content text - DM Serif Display font, fills remaining space */}
+      {/* Content text - maximized space, smaller line height */}
       {hasContent && (
-        <p className="font-serif text-sm md:text-base text-muted-foreground leading-relaxed flex-1 overflow-hidden">
+        <p className="font-serif text-xs md:text-sm text-muted-foreground leading-snug flex-1 overflow-hidden">
           {page.content}
         </p>
       )}
