@@ -10,7 +10,7 @@ const Footer = () => {
           <img 
             src={logo} 
             alt={brandConfig.logo.alt}
-            className="h-8 w-auto opacity-70"
+            className="h-24 w-auto opacity-70"
           />
         </div>
 

@@ -9,7 +9,7 @@ const Hero = () => {
         <img 
           src={logo} 
           alt={brandConfig.logo.alt}
-          className="h-12 md:h-16 w-auto"
+          className="h-60 md:h-80 w-auto"
         />
       </div>
 
@@ -21,7 +21,7 @@ const Hero = () => {
       {/* Supporting explanation - short, grounded */}
       <p className="text-lg md:text-xl text-muted-foreground text-center max-w-2xl leading-relaxed mb-16">
         A collaborative memory book where friends and family contribute messages, 
-        photos, and blessings—printed as a beautiful keepsake that lasts forever.
+        photos, and blessings, printed as a beautiful keepsake that lasts forever.
       </p>
 
       {/* CTA - an invitation, not a command */}
