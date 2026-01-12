@@ -143,27 +143,18 @@ export function BookPreview({
       // Back cover
       return (
         <div className="flex h-full">
-          <div className="w-1/2 border-r border-border flex items-center justify-center bg-background">
-            <p className="text-sm italic font-serif text-foreground/50">End of memories</p>
+          {/* Inside back cover - closing message */}
+          <div className="w-1/2 border-r border-border flex items-center justify-center bg-background px-8">
+            <p className="text-sm italic font-serif text-foreground/60 text-center leading-relaxed">
+              The voices, moments, and messages that shape a life‑changing journey have been recorded and are ready to last forever
+            </p>
           </div>
 
+          {/* Back cover - blank, just the color */}
           <div
-            className="w-1/2 flex flex-col items-center justify-center p-8"
+            className="w-1/2"
             style={{ backgroundColor: coverColors.bg }}
-          >
-            <p
-              className="text-xl mb-2 font-serif"
-              style={{ color: coverColors.text }}
-            >
-              {brandConfig.name}
-            </p>
-            <p
-              className="text-sm"
-              style={{ color: coverColors.text, opacity: 0.8 }}
-            >
-              missionmemoryvault.com
-            </p>
-          </div>
+          />
         </div>
       );
     }
