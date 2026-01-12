@@ -246,6 +246,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_is_vault_contributor: {
+        Args: { _user_id: string; _vault_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "owner" | "coowner" | "contributor"
