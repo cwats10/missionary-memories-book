@@ -65,7 +65,7 @@ export default {
         gold: "hsl(var(--gold))",
       },
       fontFamily: {
-        serif: ["'Playfair Display'", "Georgia", "serif"],
+        serif: ["'DM Serif Display'", "Georgia", "serif"],
         sans: ["'Inter'", "system-ui", "sans-serif"],
       },
       borderRadius: {
