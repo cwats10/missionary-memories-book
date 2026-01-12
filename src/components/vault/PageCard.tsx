@@ -96,8 +96,8 @@ export function PageCard({
                   </p>
                 )}
                 <div className="flex items-center gap-2 pt-2 flex-wrap">
-                  {/* Owner approval controls */}
-                  {isOwner && page.status === 'submitted' && (
+                  {/* Owner approval controls - show for draft or submitted pages */}
+                  {isOwner && (page.status === 'draft' || page.status === 'submitted') && (
                     <>
                       {onApprove && (
                         <Button
@@ -110,7 +110,7 @@ export function PageCard({
                           Approve
                         </Button>
                       )}
-                      {onReject && (
+                      {onReject && page.status === 'submitted' && (
                         <Button
                           variant="outline"
                           size="sm"
