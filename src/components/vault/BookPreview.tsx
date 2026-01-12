@@ -323,8 +323,8 @@ function PageContent({ page }: { page: Page }) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Title - centered, compact */}
-      <h3 className="font-serif text-sm md:text-base mb-2 text-foreground leading-tight text-center">{page.title || "Untitled Memory"}</h3>
+      {/* Title - centered, only show if exists */}
+      {page.title && <h3 className="font-serif text-sm md:text-base mb-2 text-foreground leading-tight text-center">{page.title}</h3>}
 
       {/* Images - smaller when content present to maximize text space */}
       {hasImages && (
