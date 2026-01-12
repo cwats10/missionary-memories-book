@@ -114,7 +114,7 @@ export function VaultCard({ vault, onDelete, onView }: VaultCardProps) {
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onView(vault.id)}>
                 <Eye className="h-3.5 w-3.5" />
-                View
+                Manage
               </Button>
               {onDelete && (
                 <AlertDialog>
