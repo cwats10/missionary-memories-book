@@ -18,6 +18,7 @@ export interface Vault {
   status: string;
   cover_image_url: string | null;
   vault_type: VaultType;
+  contributor_page_limit: number;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +38,7 @@ export interface CreateVaultInput {
   description?: string;
   occasion?: string;
   vault_type: VaultType;
+  contributor_page_limit?: number;
 }
 
 export function useVaults() {
@@ -143,6 +145,7 @@ export function useVaults() {
         description: input.description || null,
         occasion: input.occasion || null,
         vault_type: input.vault_type,
+        contributor_page_limit: input.contributor_page_limit || 1,
       })
       .select()
       .single();
