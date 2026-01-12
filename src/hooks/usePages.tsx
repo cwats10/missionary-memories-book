@@ -10,6 +10,7 @@ export interface Page {
   title: string | null;
   content: string | null;
   image_url: string | null;
+  image_urls: string[];
   page_order: number;
   status: string;
   created_at: string;
@@ -22,6 +23,7 @@ export interface CreatePageInput {
   title?: string;
   content?: string;
   image_url?: string;
+  image_urls?: string[];
 }
 
 export function usePages(vaultId: string | undefined) {
@@ -46,9 +48,10 @@ export function usePages(vaultId: string | undefined) {
       console.error('Error fetching pages:', error);
       toast.error('Failed to load pages');
     } else {
-      // Map the joined data to include contributor_name
+      // Map the joined data to include contributor_name and ensure image_urls is always an array
       const pagesWithNames = (data || []).map((page: any) => ({
         ...page,
+        image_urls: page.image_urls || [],
         contributor_name: page.profiles?.full_name || page.profiles?.email || null,
       }));
       setPages(pagesWithNames);
@@ -72,7 +75,8 @@ export function usePages(vaultId: string | undefined) {
         contributor_id: user.id,
         title: input.title || null,
         content: input.content || null,
-        image_url: input.image_url || null,
+        image_url: input.image_urls?.[0] || input.image_url || null,
+        image_urls: input.image_urls || (input.image_url ? [input.image_url] : []),
         page_order: nextOrder,
       })
       .select()

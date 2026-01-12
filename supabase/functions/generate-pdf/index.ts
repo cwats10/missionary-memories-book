@@ -217,42 +217,65 @@ serve(async (req) => {
         yPosition -= 40;
       }
 
-      // Image placeholder note (actual image embedding would require fetching and embedding)
-      if (page.image_url) {
-        try {
-          // Fetch the image
-          const imageResponse = await fetch(page.image_url);
-          if (imageResponse.ok) {
-            const imageBytes = await imageResponse.arrayBuffer();
-            const contentType = imageResponse.headers.get('content-type') || '';
-            
-            let image;
-            if (contentType.includes('png')) {
-              image = await pdfDoc.embedPng(imageBytes);
-            } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
-              image = await pdfDoc.embedJpg(imageBytes);
-            }
-            
-            if (image) {
-              const maxWidth = pageWidth - (margin * 2);
-              const maxHeight = 300;
-              const scale = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
-              const scaledWidth = image.width * scale;
-              const scaledHeight = image.height * scale;
+      // Embed images (support multiple images)
+      const imageUrls = page.image_urls?.length > 0 
+        ? page.image_urls 
+        : page.image_url 
+          ? [page.image_url] 
+          : [];
+      
+      if (imageUrls.length > 0) {
+        // Calculate layout based on number of images
+        const maxTotalWidth = pageWidth - (margin * 2);
+        const maxHeightPerImage = imageUrls.length === 1 ? 300 : 200;
+        const gapBetweenImages = 10;
+        
+        // For multiple images, arrange them side by side
+        let currentX = margin;
+        const availableWidthPerImage = imageUrls.length === 1 
+          ? maxTotalWidth 
+          : (maxTotalWidth - (gapBetweenImages * (imageUrls.length - 1))) / imageUrls.length;
+
+        let maxImageHeight = 0;
+
+        for (const imageUrl of imageUrls) {
+          try {
+            const imageResponse = await fetch(imageUrl);
+            if (imageResponse.ok) {
+              const imageBytes = await imageResponse.arrayBuffer();
+              const contentType = imageResponse.headers.get('content-type') || '';
               
-              contentPage.drawImage(image, {
-                x: margin,
-                y: yPosition - scaledHeight,
-                width: scaledWidth,
-                height: scaledHeight,
-              });
-              yPosition -= scaledHeight + 20;
+              let image;
+              if (contentType.includes('png')) {
+                image = await pdfDoc.embedPng(imageBytes);
+              } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
+                image = await pdfDoc.embedJpg(imageBytes);
+              }
+              
+              if (image) {
+                const scale = Math.min(availableWidthPerImage / image.width, maxHeightPerImage / image.height, 1);
+                const scaledWidth = image.width * scale;
+                const scaledHeight = image.height * scale;
+                
+                maxImageHeight = Math.max(maxImageHeight, scaledHeight);
+                
+                contentPage.drawImage(image, {
+                  x: currentX,
+                  y: yPosition - scaledHeight,
+                  width: scaledWidth,
+                  height: scaledHeight,
+                });
+                
+                currentX += scaledWidth + gapBetweenImages;
+              }
             }
+          } catch (imgError) {
+            console.error('Failed to embed image:', imgError);
+            // Continue without the image
           }
-        } catch (imgError) {
-          console.error('Failed to embed image:', imgError);
-          // Continue without the image
         }
+        
+        yPosition -= maxImageHeight + 20;
       }
 
       // Content text with word wrapping
