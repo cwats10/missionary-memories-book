@@ -18,14 +18,29 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 
 interface CreatePageDialogProps {
   vaultId: string;
+  vaultType: string;
+  recipientName: string;
   onCreatePage: (input: CreatePageInput) => Promise<{ error?: Error | null }>;
 }
+
+const getDialogDescription = (vaultType: string, recipientName: string): string => {
+  switch (vaultType) {
+    case 'farewell':
+      return `What message of encouragement or favorite memory or words of advice do you have for ${recipientName}?`;
+    case 'homecoming':
+      return `How did ${recipientName} impact you while they served around you? Or what is a favorite memory of yours with ${recipientName}?`;
+    case 'returned':
+      return `What memories, stories, lessons, etc. would you like to be remembered?`;
+    default:
+      return `Share a message, story, or memory for ${recipientName}.`;
+  }
+};
 
 const MAX_IMAGES = 3;
 const MAX_CHARACTERS_NO_IMAGES = 1700;
 const MAX_CHARACTERS_WITH_IMAGES = 750;
 
-export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProps) {
+export function CreatePageDialog({ vaultId, vaultType, recipientName, onCreatePage }: CreatePageDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -117,7 +132,7 @@ export function CreatePageDialog({ vaultId, onCreatePage }: CreatePageDialogProp
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl">Add a Memory</DialogTitle>
             <DialogDescription>
-              Share a message, story, or memory for this special person.
+              {getDialogDescription(vaultType, recipientName)}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-6">

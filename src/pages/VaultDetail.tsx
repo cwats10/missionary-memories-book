@@ -266,7 +266,7 @@ const VaultDetail = () => {
                 </div>
               )}
               {canCreateMorePages ? (
-                <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
+                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} />
               ) : (
                 <div className="text-sm text-muted-foreground">
                   You've created {userPageCount}/{contributorPageLimit} pages
@@ -306,7 +306,7 @@ const VaultDetail = () => {
                   : `Add your special memory for ${vault.recipient_name}. Click the button to get started!`}
               </p>
               {(canManage ? pageFilter === 'all' : true) && canCreateMorePages && (
-                <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
+                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} />
               )}
               {(canManage ? pageFilter === 'all' : true) && !canCreateMorePages && (
                 <p className="text-sm text-muted-foreground">
