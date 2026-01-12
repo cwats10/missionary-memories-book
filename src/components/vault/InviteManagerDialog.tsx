@@ -10,23 +10,23 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, Copy, Check, Link2, XCircle } from 'lucide-react';
+import { UserPlus, Copy, Check, Link2, XCircle } from 'lucide-react';
 import { useInvites, InviteLink } from '@/hooks/useInvites';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
-interface InviteDialogProps {
+interface InviteManagerDialogProps {
   vaultId: string;
   vaultTitle: string;
 }
 
-export function InviteDialog({ vaultId, vaultTitle }: InviteDialogProps) {
+export function InviteManagerDialog({ vaultId, vaultTitle }: InviteManagerDialogProps) {
   const [open, setOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { invites, loading, createInvite, deactivateInvite } = useInvites(vaultId);
 
-  // Filter to only show active contributor invites
-  const activeInvites = invites.filter((inv) => inv.is_active && inv.role === 'contributor');
+  // Filter to only show active manager (coowner) invites
+  const activeManagerInvites = invites.filter((inv) => inv.is_active && inv.role === 'coowner');
 
   const getInviteUrl = (code: string) => {
     return `${window.location.origin}/invite/${code}`;
@@ -41,22 +41,23 @@ export function InviteDialog({ vaultId, vaultTitle }: InviteDialogProps) {
   };
 
   const handleCreateInvite = async () => {
-    await createInvite('contributor');
+    await createInvite('coowner');
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
-          <Users className="h-4 w-4" />
-          Invite
+          <UserPlus className="h-4 w-4" />
+          Invite Manager
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl">Invite Contributors</DialogTitle>
+          <DialogTitle className="font-serif text-2xl">Invite a Manager</DialogTitle>
           <DialogDescription>
-            Share a link with friends and family to let them add memories to "{vaultTitle}".
+            Share a link to invite someone to help manage "{vaultTitle}". Managers can invite
+            contributors, organize pages, and approve submissions.
           </DialogDescription>
         </DialogHeader>
 
@@ -65,40 +66,35 @@ export function InviteDialog({ vaultId, vaultTitle }: InviteDialogProps) {
           <div className="mb-6">
             <Button onClick={handleCreateInvite} className="w-full gap-2">
               <Link2 className="h-4 w-4" />
-              Generate New Invite Link
+              Generate Manager Invite Link
             </Button>
           </div>
 
           {/* Active Links */}
           <div>
             <Label className="text-sm font-medium mb-3 block">
-              Active Invite Links ({activeInvites.length})
+              Active Manager Invites ({activeManagerInvites.length})
             </Label>
-            
+
             {loading ? (
               <div className="text-center py-4 text-muted-foreground">Loading...</div>
-            ) : activeInvites.length === 0 ? (
+            ) : activeManagerInvites.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground border border-dashed rounded-lg">
-                <p className="text-sm">No active invite links</p>
+                <p className="text-sm">No active manager invite links</p>
                 <p className="text-xs mt-1">Generate one above to get started</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {activeInvites.map((invite) => (
-                  <div
-                    key={invite.id}
-                    className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg"
-                  >
+                {activeManagerInvites.map((invite) => (
+                  <div key={invite.id} className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
                     <div className="flex-1 min-w-0">
-                      <Input
-                        readOnly
-                        value={getInviteUrl(invite.code)}
-                        className="text-xs bg-background"
-                      />
+                      <Input readOnly value={getInviteUrl(invite.code)} className="text-xs bg-background" />
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                         <span>Used {invite.uses_count} times</span>
                         <span>•</span>
-                        <span>Created {formatDistanceToNow(new Date(invite.created_at), { addSuffix: true })}</span>
+                        <span>
+                          Created {formatDistanceToNow(new Date(invite.created_at), { addSuffix: true })}
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-1">

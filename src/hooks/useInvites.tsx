@@ -43,7 +43,7 @@ export function useInvites(vaultId: string | undefined) {
     fetchInvites();
   }, [user, vaultId]);
 
-  const createInvite = async () => {
+  const createInvite = async (role: 'coowner' | 'contributor' = 'contributor') => {
     if (!user || !vaultId) return { error: new Error('Not authenticated') };
 
     // Generate a random 8-character code
@@ -55,7 +55,7 @@ export function useInvites(vaultId: string | undefined) {
         vault_id: vaultId,
         created_by: user.id,
         code,
-        role: 'contributor',
+        role,
       })
       .select()
       .single();
