@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      invite_links: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          role: Database["public"]["Enums"]["app_role"]
+          uses_count: number
+          vault_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
+          uses_count?: number
+          vault_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
+          uses_count?: number
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_links_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           content: string | null
@@ -191,6 +238,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invite_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
