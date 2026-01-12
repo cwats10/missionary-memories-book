@@ -23,7 +23,8 @@ interface EditPageDialogProps {
 }
 
 const MAX_IMAGES = 3;
-const MAX_CHARACTERS = 1000;
+const MAX_CHARACTERS_NO_IMAGES = 1700;
+const MAX_CHARACTERS_WITH_IMAGES = 750;
 
 export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -58,6 +59,8 @@ export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDia
 
   const totalImages = existingImages.length + newImageFiles.length;
   const canAddMore = totalImages < MAX_IMAGES;
+  const hasImages = totalImages > 0;
+  const maxCharacters = hasImages ? MAX_CHARACTERS_WITH_IMAGES : MAX_CHARACTERS_NO_IMAGES;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -224,19 +227,25 @@ export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDia
             <div className="grid gap-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="edit-content">Your Message</Label>
-                <span className={`text-xs ${formData.content.length > MAX_CHARACTERS ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {formData.content.length}/{MAX_CHARACTERS}
+                <span className={`text-xs ${formData.content.length > maxCharacters ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {formData.content.length}/{maxCharacters}
                 </span>
               </div>
               <Textarea
                 id="edit-content"
                 placeholder="Write your heartfelt message here..."
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value.slice(0, MAX_CHARACTERS) })}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value.slice(0, maxCharacters) })}
                 rows={6}
-                maxLength={MAX_CHARACTERS}
+                maxLength={maxCharacters}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                {hasImages 
+                  ? `Character limit reduced to ${MAX_CHARACTERS_WITH_IMAGES} when images are added.`
+                  : `You have a ${MAX_CHARACTERS_NO_IMAGES} character limit, but adding images reduces it to ${MAX_CHARACTERS_WITH_IMAGES}.`
+                }
+              </p>
             </div>
           </div>
           <DialogFooter>
