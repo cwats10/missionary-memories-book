@@ -10,6 +10,7 @@ import { PageCard } from '@/components/vault/PageCard';
 import { EditPageDialog } from '@/components/vault/EditPageDialog';
 import { InviteDialog } from '@/components/vault/InviteDialog';
 import { BookPreview } from '@/components/vault/BookPreview';
+import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 
@@ -108,6 +109,10 @@ const VaultDetail = () => {
                   vaultTitle={vault.title} 
                   recipientName={vault.recipient_name} 
                   pages={pages} 
+                />
+                <CheckoutDialog 
+                  vaultTitle={vault.title} 
+                  pageCount={pages.length} 
                 />
                 <InviteDialog vaultId={vault.id} vaultTitle={vault.title} />
                 <Button variant="outline" size="sm" className="gap-1.5">
