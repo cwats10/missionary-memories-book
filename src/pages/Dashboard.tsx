@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useVaults } from '@/hooks/useVaults';
@@ -7,11 +8,15 @@ import { CreateVaultDialog } from '@/components/dashboard/CreateVaultDialog';
 import { VaultCard } from '@/components/dashboard/VaultCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+
+type ViewTab = 'owner' | 'manager' | 'contributor';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, roles, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { vaults, loading: vaultsLoading, createVault, deleteVault } = useVaults();
+  const [activeTab, setActiveTab] = useState<ViewTab>('owner');
 
   if (authLoading) {
     return (
@@ -25,12 +30,11 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const getRoleLabel = () => {
-    if (roles.includes('owner')) return 'Owner';
-    if (roles.includes('coowner')) return 'Co-owner';
-    if (roles.includes('contributor')) return 'Contributor';
-    return 'Member';
-  };
+  const tabs: { key: ViewTab; label: string }[] = [
+    { key: 'owner', label: 'Owner' },
+    { key: 'manager', label: 'Manager' },
+    { key: 'contributor', label: 'Contributor' },
+  ];
 
   const handleViewVault = (vaultId: string) => {
     navigate(`/vault/${vaultId}`);
@@ -43,26 +47,42 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <a href="/" className="font-serif text-xl tracking-tight">
-            {brandConfig.name}
-          </a>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              {user.email}
-            </span>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-              {getRoleLabel()}
-            </span>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={signOut}
-            >
-              Sign Out
-            </Button>
+      <header className="border-b border-border">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-between py-4">
+            <a href="/" className="font-serif text-xl tracking-tight">
+              {brandConfig.name}
+            </a>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">
+                {user.email}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={signOut}
+              >
+                Sign Out
+              </Button>
+            </div>
           </div>
+          {/* Tab Navigation */}
+          <nav className="flex gap-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+                  activeTab === tab.key
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         </div>
       </header>
 
