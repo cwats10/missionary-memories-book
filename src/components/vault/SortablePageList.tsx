@@ -7,9 +7,22 @@ interface SortablePageListProps {
   onReorder: (pages: Page[]) => Promise<{ error: Error | null }>;
   onDelete: (id: string) => Promise<void>;
   onEdit: (page: Page) => void;
+  onApprove?: (id: string) => Promise<{ error: unknown }>;
+  onReject?: (id: string) => Promise<{ error: unknown }>;
+  onSubmit?: (id: string) => Promise<{ error: unknown }>;
+  isOwner?: boolean;
 }
 
-export function SortablePageList({ pages, onReorder, onDelete, onEdit }: SortablePageListProps) {
+export function SortablePageList({ 
+  pages, 
+  onReorder, 
+  onDelete, 
+  onEdit,
+  onApprove,
+  onReject,
+  onSubmit,
+  isOwner
+}: SortablePageListProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -78,6 +91,10 @@ export function SortablePageList({ pages, onReorder, onDelete, onEdit }: Sortabl
             pageNumber={index + 1}
             onDelete={onDelete}
             onEdit={onEdit}
+            onApprove={onApprove}
+            onReject={onReject}
+            onSubmit={onSubmit}
+            isOwner={isOwner}
             isDragging={draggedIndex === index}
             dragHandleProps={{
               onMouseDown: (e) => e.stopPropagation(),

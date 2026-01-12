@@ -20,9 +20,11 @@ const VaultDetail = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { vault, loading: vaultLoading } = useVault(id);
-  const { pages, loading: pagesLoading, createPage, updatePage, deletePage, reorderPages } = usePages(id);
+  const { pages, loading: pagesLoading, createPage, updatePage, deletePage, reorderPages, approvePage, rejectPage, submitPage } = usePages(id);
   
   const [editingPage, setEditingPage] = useState<Page | null>(null);
+  
+  const isOwner = vault?.owner_id === user?.id;
 
   if (authLoading || vaultLoading) {
     return (
@@ -184,6 +186,10 @@ const VaultDetail = () => {
                 onReorder={reorderPages}
                 onDelete={handleDeletePage}
                 onEdit={handleEditPage}
+                onApprove={approvePage}
+                onReject={rejectPage}
+                onSubmit={submitPage}
+                isOwner={isOwner}
               />
             </>
           )}
