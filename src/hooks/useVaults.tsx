@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
@@ -19,6 +19,12 @@ export interface Vault {
   updated_at: string;
 }
 
+export type VaultRole = 'owner' | 'coowner' | 'contributor';
+
+export interface VaultWithRole extends Vault {
+  userRole: VaultRole;
+}
+
 export interface CreateVaultInput {
   title: string;
   recipient_name: string;
@@ -31,30 +37,88 @@ export interface CreateVaultInput {
 
 export function useVaults() {
   const { user } = useAuth();
-  const [vaults, setVaults] = useState<Vault[]>([]);
+  const [vaults, setVaults] = useState<VaultWithRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchVaults = async () => {
     if (!user) return;
-    
+
     setLoading(true);
-    const { data, error } = await supabase
+
+    // Fetch vaults user owns
+    const { data: ownedVaults, error: ownedError } = await supabase
       .from('vaults')
       .select('*')
+      .eq('owner_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching vaults:', error);
+    if (ownedError) {
+      console.error('Error fetching owned vaults:', ownedError);
       toast.error('Failed to load vaults');
-    } else {
-      setVaults(data || []);
+      setLoading(false);
+      return;
     }
+
+    // Fetch vaults user is a contributor/coowner on
+    const { data: contributorRecords, error: contribError } = await supabase
+      .from('vault_contributors')
+      .select('vault_id, role')
+      .eq('user_id', user.id);
+
+    if (contribError) {
+      console.error('Error fetching contributor records:', contribError);
+    }
+
+    // Fetch contributed vault details
+    let contributedVaults: Vault[] = [];
+    const contributorMap = new Map<string, VaultRole>();
+
+    if (contributorRecords && contributorRecords.length > 0) {
+      contributorRecords.forEach((rec) => {
+        contributorMap.set(rec.vault_id, rec.role as VaultRole);
+      });
+
+      const vaultIds = contributorRecords.map((r) => r.vault_id);
+      const { data: contribVaults, error: contribVaultsError } = await supabase
+        .from('vaults')
+        .select('*')
+        .in('id', vaultIds)
+        .order('created_at', { ascending: false });
+
+      if (contribVaultsError) {
+        console.error('Error fetching contributed vaults:', contribVaultsError);
+      } else {
+        contributedVaults = contribVaults || [];
+      }
+    }
+
+    // Combine, deduplicating and assigning roles
+    const ownedIds = new Set((ownedVaults || []).map((v) => v.id));
+
+    const ownedWithRole: VaultWithRole[] = (ownedVaults || []).map((v) => ({
+      ...v,
+      userRole: 'owner' as VaultRole,
+    }));
+
+    const contribWithRole: VaultWithRole[] = contributedVaults
+      .filter((v) => !ownedIds.has(v.id)) // exclude if user also owns it
+      .map((v) => ({
+        ...v,
+        userRole: contributorMap.get(v.id) || 'contributor',
+      }));
+
+    setVaults([...ownedWithRole, ...contribWithRole]);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchVaults();
   }, [user]);
+
+  // Filtered lists by role
+  const ownedVaults = useMemo(() => vaults.filter((v) => v.userRole === 'owner'), [vaults]);
+  const managedVaults = useMemo(() => vaults.filter((v) => v.userRole === 'coowner'), [vaults]);
+  const contributedVaults = useMemo(() => vaults.filter((v) => v.userRole === 'contributor'), [vaults]);
 
   const createVault = async (input: CreateVaultInput) => {
     if (!user) return { error: new Error('Not authenticated') };
@@ -86,10 +150,7 @@ export function useVaults() {
   };
 
   const deleteVault = async (vaultId: string) => {
-    const { error } = await supabase
-      .from('vaults')
-      .delete()
-      .eq('id', vaultId);
+    const { error } = await supabase.from('vaults').delete().eq('id', vaultId);
 
     if (error) {
       console.error('Error deleting vault:', error);
@@ -104,6 +165,9 @@ export function useVaults() {
 
   return {
     vaults,
+    ownedVaults,
+    managedVaults,
+    contributedVaults,
     loading,
     createVault,
     deleteVault,
