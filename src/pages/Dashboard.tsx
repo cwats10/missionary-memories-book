@@ -2,7 +2,6 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { brandConfig } from '@/config/brandConfig';
-import logo from '@/assets/logo.png';
 
 const Dashboard = () => {
   const { user, loading, roles, signOut } = useAuth();
@@ -31,12 +30,8 @@ const Dashboard = () => {
       {/* Header */}
       <header className="border-b border-border px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <a href="/">
-            <img 
-              src={logo} 
-              alt={brandConfig.logo.alt}
-              className="h-12 w-auto"
-            />
+          <a href="/" className="font-serif text-xl tracking-tight">
+            {brandConfig.name}
           </a>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
