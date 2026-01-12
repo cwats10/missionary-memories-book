@@ -47,6 +47,12 @@ const AcceptInvite = () => {
     const { error } = await acceptInvite(code, user.id);
     
     if (error) {
+      // If already a contributor/manager, redirect to dashboard
+      if (error.message?.includes('already a contributor')) {
+        toast.info('You already have access to this vault');
+        navigate('/dashboard');
+        return;
+      }
       toast.error(error.message);
       setAccepting(false);
     } else {
