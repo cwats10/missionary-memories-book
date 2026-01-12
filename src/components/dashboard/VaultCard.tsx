@@ -114,8 +114,11 @@ export function VaultCard({ vault, onDelete, onView }: VaultCardProps) {
             <div className="flex gap-2">
               <Button 
                 size="sm" 
-                className="text-white hover:opacity-90"
-                style={{ backgroundColor: brandConfig.colors.deepForest.hex }}
+                className="hover:opacity-90"
+                style={{ 
+                  backgroundColor: brandConfig.colors.deepForest.hex,
+                  color: brandConfig.colors.boneParchment.hex 
+                }}
                 onClick={() => onView(vault.id)}
               >
                 Manage
