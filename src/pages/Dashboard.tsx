@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useVaults } from '@/hooks/useVaults';
@@ -15,8 +15,21 @@ type ViewTab = 'owner' | 'manager' | 'contributor';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { vaults, loading: vaultsLoading, createVault, deleteVault } = useVaults();
+  const { ownedVaults, managedVaults, contributedVaults, loading: vaultsLoading, createVault, deleteVault } = useVaults();
   const [activeTab, setActiveTab] = useState<ViewTab>('owner');
+
+  const filteredVaults = useMemo(() => {
+    switch (activeTab) {
+      case 'owner':
+        return ownedVaults;
+      case 'manager':
+        return managedVaults;
+      case 'contributor':
+        return contributedVaults;
+      default:
+        return ownedVaults;
+    }
+  }, [activeTab, ownedVaults, managedVaults, contributedVaults]);
 
   if (authLoading) {
     return (
@@ -30,10 +43,10 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const tabs: { key: ViewTab; label: string }[] = [
-    { key: 'owner', label: 'Owner' },
-    { key: 'manager', label: 'Manager' },
-    { key: 'contributor', label: 'Contributor' },
+  const tabs: { key: ViewTab; label: string; count: number }[] = [
+    { key: 'owner', label: 'Owner', count: ownedVaults.length },
+    { key: 'manager', label: 'Manager', count: managedVaults.length },
+    { key: 'contributor', label: 'Contributor', count: contributedVaults.length },
   ];
 
   const handleViewVault = (vaultId: string) => {
@@ -54,14 +67,8 @@ const Dashboard = () => {
               {brandConfig.name}
             </a>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                {user.email}
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={signOut}
-              >
+              <span className="text-sm text-muted-foreground">{user.email}</span>
+              <Button variant="outline" size="sm" onClick={signOut}>
                 Sign Out
               </Button>
             </div>
@@ -71,15 +78,24 @@ const Dashboard = () => {
             {tabs.map((tab) => (
               <button
                 key={tab.key}
+                type="button"
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+                  'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px flex items-center gap-2',
                   activeTab === tab.key
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 )}
               >
                 {tab.label}
+                <span
+                  className={cn(
+                    'text-xs px-1.5 py-0.5 rounded-full',
+                    activeTab === tab.key ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {tab.count}
+                </span>
               </button>
             ))}
           </nav>
@@ -93,11 +109,9 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="font-serif text-3xl mb-1">Your Vaults</h1>
-              <p className="text-muted-foreground">
-                Create and manage memory books for your loved ones.
-              </p>
+              <p className="text-muted-foreground">Create and manage memory books for your loved ones.</p>
             </div>
-            <CreateVaultDialog onCreateVault={createVault} />
+            {activeTab === 'owner' && <CreateVaultDialog onCreateVault={createVault} />}
           </div>
 
           {/* Vaults Grid */}
@@ -111,15 +125,25 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-          ) : vaults.length === 0 ? (
-            <EmptyState />
+          ) : filteredVaults.length === 0 ? (
+            activeTab === 'owner' ? (
+              <EmptyState />
+            ) : (
+              <div className="text-center py-16 border border-dashed border-border rounded-lg">
+                <p className="text-muted-foreground">
+                  {activeTab === 'manager'
+                    ? 'You are not a manager on any vaults yet.'
+                    : 'You have not been invited to contribute to any vaults yet.'}
+                </p>
+              </div>
+            )
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {vaults.map((vault) => (
+              {filteredVaults.map((vault) => (
                 <VaultCard
                   key={vault.id}
                   vault={vault}
-                  onDelete={handleDeleteVault}
+                  onDelete={activeTab === 'owner' ? handleDeleteVault : undefined}
                   onView={handleViewVault}
                 />
               ))}
