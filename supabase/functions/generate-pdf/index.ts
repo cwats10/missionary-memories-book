@@ -336,8 +336,15 @@ serve(async (req) => {
     // Serialize PDF
     const pdfBytes = await pdfDoc.save();
     
-    // Return PDF as base64
-    const base64Pdf = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
+    // Convert to base64 in chunks to avoid stack overflow
+    const uint8Array = new Uint8Array(pdfBytes);
+    let binaryString = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      binaryString += String.fromCharCode(...chunk);
+    }
+    const base64Pdf = btoa(binaryString);
 
     return new Response(JSON.stringify({ 
       pdf: base64Pdf,
