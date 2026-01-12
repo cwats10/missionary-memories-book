@@ -34,6 +34,7 @@ const VaultDetail = () => {
     reorderPages,
     approvePage,
     rejectPage,
+    unapprove,
     submitPage,
   } = usePages(id);
 
@@ -231,6 +232,7 @@ const VaultDetail = () => {
                 onEdit={handleEditPage}
                 onApprove={approvePage}
                 onReject={rejectPage}
+                onUnapprove={unapprove}
                 onSubmit={submitPage}
                 isOwner={isOwner}
               />
