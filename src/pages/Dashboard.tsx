@@ -1,12 +1,19 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useVaults } from '@/hooks/useVaults';
 import { Button } from '@/components/ui/button';
 import { brandConfig } from '@/config/brandConfig';
+import { CreateVaultDialog } from '@/components/dashboard/CreateVaultDialog';
+import { VaultCard } from '@/components/dashboard/VaultCard';
+import { EmptyState } from '@/components/dashboard/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Dashboard = () => {
-  const { user, loading, roles, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { user, loading: authLoading, roles, signOut } = useAuth();
+  const { vaults, loading: vaultsLoading, createVault, deleteVault } = useVaults();
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -23,6 +30,14 @@ const Dashboard = () => {
     if (roles.includes('coowner')) return 'Co-owner';
     if (roles.includes('contributor')) return 'Contributor';
     return 'Member';
+  };
+
+  const handleViewVault = (vaultId: string) => {
+    navigate(`/vault/${vaultId}`);
+  };
+
+  const handleDeleteVault = async (vaultId: string) => {
+    await deleteVault(vaultId);
   };
 
   return (
@@ -52,36 +67,44 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="px-6 py-16">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="font-serif text-4xl mb-4">
-            Welcome to Your Memory Vault
-          </h1>
-          <p className="text-muted-foreground text-lg mb-12">
-            This is where you'll manage your memory books, invite contributors, and bring your stories to life.
-          </p>
-
-          {/* Placeholder for future features */}
-          <div className="grid md:grid-cols-3 gap-6 mt-12">
-            <div className="p-8 border border-border rounded-lg bg-card">
-              <h3 className="font-serif text-xl mb-2">Create a Vault</h3>
-              <p className="text-muted-foreground text-sm">
-                Start a new memory book for a missionary, graduate, or special occasion.
+      <main className="px-6 py-12">
+        <div className="max-w-5xl mx-auto">
+          {/* Page Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="font-serif text-3xl mb-1">Your Vaults</h1>
+              <p className="text-muted-foreground">
+                Create and manage memory books for your loved ones.
               </p>
             </div>
-            <div className="p-8 border border-border rounded-lg bg-card">
-              <h3 className="font-serif text-xl mb-2">Invite Contributors</h3>
-              <p className="text-muted-foreground text-sm">
-                Share a link with friends and family to collect their messages.
-              </p>
-            </div>
-            <div className="p-8 border border-border rounded-lg bg-card">
-              <h3 className="font-serif text-xl mb-2">Order Prints</h3>
-              <p className="text-muted-foreground text-sm">
-                Turn your digital memories into a beautiful printed keepsake.
-              </p>
-            </div>
+            <CreateVaultDialog onCreateVault={createVault} />
           </div>
+
+          {/* Vaults Grid */}
+          {vaultsLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-6 border border-border rounded-lg">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2 mb-4" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : vaults.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {vaults.map((vault) => (
+                <VaultCard
+                  key={vault.id}
+                  vault={vault}
+                  onDelete={handleDeleteVault}
+                  onView={handleViewVault}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>
