@@ -146,7 +146,7 @@ export function BookPreview({
           {/* Inside back cover - closing message */}
           <div className="w-1/2 border-r border-border flex items-center justify-center bg-background px-8">
             <p className="text-sm italic font-serif text-foreground/60 text-center leading-relaxed">
-              The voices, moments, and messages that shape a life‑changing journey have been recorded and are ready to last forever
+              The voices, moments, and messages that shape a life‑changing journey have been recorded and will now last forever
             </p>
           </div>
 
