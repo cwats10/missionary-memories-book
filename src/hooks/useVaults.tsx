@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
+export type VaultType = 'farewell' | 'homecoming' | 'returned';
+
 export interface Vault {
   id: string;
   owner_id: string;
@@ -15,6 +17,7 @@ export interface Vault {
   occasion: string | null;
   status: string;
   cover_image_url: string | null;
+  vault_type: VaultType;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +36,7 @@ export interface CreateVaultInput {
   service_end_date?: string;
   description?: string;
   occasion?: string;
+  vault_type: VaultType;
 }
 
 export function useVaults() {
@@ -88,7 +92,10 @@ export function useVaults() {
       if (contribVaultsError) {
         console.error('Error fetching contributed vaults:', contribVaultsError);
       } else {
-        contributedVaults = contribVaults || [];
+        contributedVaults = (contribVaults || []).map((v) => ({
+          ...v,
+          vault_type: v.vault_type as VaultType,
+        }));
       }
     }
 
@@ -97,6 +104,7 @@ export function useVaults() {
 
     const ownedWithRole: VaultWithRole[] = (ownedVaults || []).map((v) => ({
       ...v,
+      vault_type: v.vault_type as VaultType,
       userRole: 'owner' as VaultRole,
     }));
 
@@ -134,6 +142,7 @@ export function useVaults() {
         service_end_date: input.service_end_date || null,
         description: input.description || null,
         occasion: input.occasion || null,
+        vault_type: input.vault_type,
       })
       .select()
       .single();

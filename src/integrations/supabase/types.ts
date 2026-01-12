@@ -209,6 +209,7 @@ export type Database = {
           status: string
           title: string
           updated_at: string
+          vault_type: string
         }
         Insert: {
           cover_image_url?: string | null
@@ -224,6 +225,7 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string
+          vault_type?: string
         }
         Update: {
           cover_image_url?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+          vault_type?: string
         }
         Relationships: []
       }

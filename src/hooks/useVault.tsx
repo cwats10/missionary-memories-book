@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Vault } from './useVaults';
+import { Vault, VaultType } from './useVaults';
 
 export function useVault(vaultId: string | undefined) {
   const [vault, setVault] = useState<Vault | null>(null);
@@ -22,7 +22,14 @@ export function useVault(vaultId: string | undefined) {
       console.error('Error fetching vault:', error);
     }
     
-    setVault(data);
+    if (data) {
+      setVault({
+        ...data,
+        vault_type: data.vault_type as VaultType,
+      });
+    } else {
+      setVault(null);
+    }
     setLoading(false);
   }, [vaultId]);
 

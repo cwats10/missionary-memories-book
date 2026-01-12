@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useCallback, useState } from "react";
 import { Page } from "@/hooks/usePages";
+import { VaultType } from "@/hooks/useVaults";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,7 +19,28 @@ interface BookPreviewProps {
   serviceStartDate?: string | null;
   serviceEndDate?: string | null;
   pages: Page[];
+  vaultType: VaultType;
 }
+
+const getCoverColors = (vaultType: VaultType) => {
+  switch (vaultType) {
+    case 'farewell':
+      return {
+        bg: brandConfig.colors.boneParchment.hex,
+        text: brandConfig.colors.deepCharcoal.hex,
+      };
+    case 'homecoming':
+      return {
+        bg: brandConfig.colors.deepForest.hex,
+        text: '#F4F1EC',
+      };
+    case 'returned':
+      return {
+        bg: brandConfig.colors.deepCharcoal.hex,
+        text: '#F4F1EC',
+      };
+  }
+};
 
 export function BookPreview({
   recipientName,
@@ -26,9 +48,12 @@ export function BookPreview({
   serviceStartDate,
   serviceEndDate,
   pages,
+  vaultType,
 }: BookPreviewProps) {
   const [currentSpread, setCurrentSpread] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+
+  const coverColors = getCoverColors(vaultType);
 
   // Filter to only show approved pages in the preview
   const approvedPages = useMemo(() => pages.filter((p) => p.status === "approved"), [pages]);
@@ -78,10 +103,17 @@ export function BookPreview({
           <div className="w-1/2 border-r border-border bg-background" />
 
           {/* Front cover */}
-          <div className="w-1/2 flex flex-col items-center justify-center p-8 bg-accent text-accent-foreground">
+          <div
+            className="w-1/2 flex flex-col items-center justify-center p-8"
+            style={{ backgroundColor: coverColors.bg }}
+          >
             <div className="text-center">
-              <h2 className="font-serif text-3xl md:text-4xl mb-4">Mission Memory Vault</h2>
-              <p className="font-serif text-lg opacity-90">{recipientName}</p>
+              <h2
+                className="font-serif text-3xl md:text-4xl"
+                style={{ color: coverColors.text }}
+              >
+                Mission Memory Vault
+              </h2>
             </div>
           </div>
         </div>
@@ -115,9 +147,22 @@ export function BookPreview({
             <p className="text-sm italic font-serif text-foreground/50">End of memories</p>
           </div>
 
-          <div className="w-1/2 flex flex-col items-center justify-center p-8 bg-accent text-accent-foreground">
-            <p className="text-xl mb-2 font-serif">{brandConfig.name}</p>
-            <p className="text-sm opacity-80">missionmemoryvault.com</p>
+          <div
+            className="w-1/2 flex flex-col items-center justify-center p-8"
+            style={{ backgroundColor: coverColors.bg }}
+          >
+            <p
+              className="text-xl mb-2 font-serif"
+              style={{ color: coverColors.text }}
+            >
+              {brandConfig.name}
+            </p>
+            <p
+              className="text-sm"
+              style={{ color: coverColors.text, opacity: 0.8 }}
+            >
+              missionmemoryvault.com
+            </p>
           </div>
         </div>
       );

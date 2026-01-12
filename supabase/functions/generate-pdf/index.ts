@@ -82,6 +82,34 @@ serve(async (req) => {
     const pageHeight = 792; // 11 inches * 72
     const margin = 72; // 1 inch margins
 
+    // Get cover colors based on vault type
+    const getCoverColors = (vaultType: string) => {
+      switch (vaultType) {
+        case 'farewell':
+          return {
+            bg: rgb(0.957, 0.945, 0.925), // #F4F1EC
+            text: rgb(0.169, 0.169, 0.165), // #2B2B2A
+          };
+        case 'homecoming':
+          return {
+            bg: rgb(0.184, 0.243, 0.212), // #2F3E36
+            text: rgb(0.957, 0.945, 0.925), // #F4F1EC
+          };
+        case 'returned':
+          return {
+            bg: rgb(0.169, 0.169, 0.165), // #2B2B2A
+            text: rgb(0.957, 0.945, 0.925), // #F4F1EC
+          };
+        default:
+          return {
+            bg: rgb(0.957, 0.945, 0.925),
+            text: rgb(0.169, 0.169, 0.165),
+          };
+      }
+    };
+
+    const coverColors = getCoverColors(vault.vault_type || 'farewell');
+
     // Create cover page
     const coverPage = pdfDoc.addPage([pageWidth, pageHeight]);
     
@@ -91,39 +119,69 @@ serve(async (req) => {
       y: 0,
       width: pageWidth,
       height: pageHeight,
-      color: rgb(0.95, 0.93, 0.88), // Warm cream color
+      color: coverColors.bg,
     });
 
-    // Cover title
+    // Cover title - just "Mission Memory Vault" centered
+    const titleText = 'Mission Memory Vault';
     const titleFontSize = 36;
-    const titleWidth = timesRomanBold.widthOfTextAtSize(vault.title, titleFontSize);
-    coverPage.drawText(vault.title, {
+    const titleWidth = timesRomanBold.widthOfTextAtSize(titleText, titleFontSize);
+    coverPage.drawText(titleText, {
       x: (pageWidth - titleWidth) / 2,
-      y: pageHeight / 2 + 60,
+      y: pageHeight / 2,
       size: titleFontSize,
+      font: timesRomanBold,
+      color: coverColors.text,
+    });
+
+    // Add title page (dedication page)
+    const titlePage = pdfDoc.addPage([pageWidth, pageHeight]);
+    titlePage.drawRectangle({
+      x: 0,
+      y: 0,
+      width: pageWidth,
+      height: pageHeight,
+      color: rgb(1, 1, 1), // White background
+    });
+
+    // Recipient name
+    const recipientFontSize = 28;
+    const recipientWidth = timesRomanBold.widthOfTextAtSize(vault.recipient_name, recipientFontSize);
+    titlePage.drawText(vault.recipient_name, {
+      x: (pageWidth - recipientWidth) / 2,
+      y: pageHeight / 2 + 60,
+      size: recipientFontSize,
       font: timesRomanBold,
       color: rgb(0.2, 0.15, 0.1),
     });
 
-    // Subtitle - recipient name
-    const subtitleText = `For ${vault.recipient_name}`;
-    const subtitleFontSize = 18;
-    const subtitleWidth = timesRoman.widthOfTextAtSize(subtitleText, subtitleFontSize);
-    coverPage.drawText(subtitleText, {
-      x: (pageWidth - subtitleWidth) / 2,
-      y: pageHeight / 2,
-      size: subtitleFontSize,
-      font: timesRoman,
-      color: rgb(0.4, 0.35, 0.3),
-    });
+    // Mission name
+    if (vault.mission_name) {
+      const missionFontSize = 18;
+      const missionWidth = timesRoman.widthOfTextAtSize(vault.mission_name, missionFontSize);
+      titlePage.drawText(vault.mission_name, {
+        x: (pageWidth - missionWidth) / 2,
+        y: pageHeight / 2 + 20,
+        size: missionFontSize,
+        font: timesRoman,
+        color: rgb(0.4, 0.35, 0.3),
+      });
+    }
 
-    // Occasion if present
-    if (vault.occasion) {
-      const occasionWidth = timesRoman.widthOfTextAtSize(vault.occasion, 14);
-      coverPage.drawText(vault.occasion, {
-        x: (pageWidth - occasionWidth) / 2,
-        y: pageHeight / 2 - 40,
-        size: 14,
+    // Service dates
+    if (vault.service_start_date || vault.service_end_date) {
+      const formatDate = (dateStr: string | null) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      };
+      const datesText = `${formatDate(vault.service_start_date)} — ${formatDate(vault.service_end_date)}`;
+      const datesFontSize = 14;
+      const datesWidth = timesRoman.widthOfTextAtSize(datesText, datesFontSize);
+      titlePage.drawText(datesText, {
+        x: (pageWidth - datesWidth) / 2,
+        y: pageHeight / 2 - 20,
+        size: datesFontSize,
         font: timesRoman,
         color: rgb(0.5, 0.45, 0.4),
       });
@@ -249,7 +307,7 @@ serve(async (req) => {
       y: 0,
       width: pageWidth,
       height: pageHeight,
-      color: rgb(0.95, 0.93, 0.88),
+      color: coverColors.bg,
     });
 
     const madeWithText = 'Made with Mission Memory Vault™';
@@ -259,7 +317,7 @@ serve(async (req) => {
       y: margin,
       size: 12,
       font: timesRoman,
-      color: rgb(0.5, 0.45, 0.4),
+      color: coverColors.text,
     });
 
     // Serialize PDF
