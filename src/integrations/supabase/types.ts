@@ -200,9 +200,12 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          mission_name: string | null
           occasion: string | null
           owner_id: string
           recipient_name: string
+          service_end_date: string | null
+          service_start_date: string | null
           status: string
           title: string
           updated_at: string
@@ -212,9 +215,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          mission_name?: string | null
           occasion?: string | null
           owner_id: string
           recipient_name: string
+          service_end_date?: string | null
+          service_start_date?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -224,9 +230,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          mission_name?: string | null
           occasion?: string | null
           owner_id?: string
           recipient_name?: string
+          service_end_date?: string | null
+          service_start_date?: string | null
           status?: string
           title?: string
           updated_at?: string

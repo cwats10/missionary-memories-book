@@ -23,10 +23,11 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
     recipient_name: '',
+    mission_name: '',
+    service_start_date: '',
+    service_end_date: '',
     description: '',
-    occasion: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,17 +35,19 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
     setLoading(true);
 
     const result = await onCreateVault({
-      title: formData.title,
+      title: 'Mission Memory Vault',
       recipient_name: formData.recipient_name,
+      mission_name: formData.mission_name || undefined,
+      service_start_date: formData.service_start_date || undefined,
+      service_end_date: formData.service_end_date || undefined,
       description: formData.description || undefined,
-      occasion: formData.occasion || undefined,
     });
 
     setLoading(false);
 
     if (!result.error) {
       setOpen(false);
-      setFormData({ title: '', recipient_name: '', description: '', occasion: '' });
+      setFormData({ recipient_name: '', mission_name: '', service_start_date: '', service_end_date: '', description: '' });
     }
   };
 
@@ -61,22 +64,12 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl">Create a New Vault</DialogTitle>
             <DialogDescription>
-              Start a memory book for someone special. You can invite contributors later.
+              Start a Mission Memory Vault for a returning missionary. You can invite contributors later.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-6">
             <div className="grid gap-2">
-              <Label htmlFor="title">Vault Title</Label>
-              <Input
-                id="title"
-                placeholder="Elder Smith's Mission Memories"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="recipient">Recipient Name</Label>
+              <Label htmlFor="recipient">Missionary Name</Label>
               <Input
                 id="recipient"
                 placeholder="Elder John Smith"
@@ -86,22 +79,45 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="occasion">Occasion (optional)</Label>
+              <Label htmlFor="mission">Mission</Label>
               <Input
-                id="occasion"
-                placeholder="Mission Homecoming, Graduation, etc."
-                value={formData.occasion}
-                onChange={(e) => setFormData({ ...formData, occasion: e.target.value })}
+                id="mission"
+                placeholder="California Los Angeles Mission"
+                value={formData.mission_name}
+                onChange={(e) => setFormData({ ...formData, mission_name: e.target.value })}
+                required
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="start_date">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={formData.service_start_date}
+                  onChange={(e) => setFormData({ ...formData, service_start_date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="end_date">End Date</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.service_end_date}
+                  onChange={(e) => setFormData({ ...formData, service_end_date: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">Personal Note (optional)</Label>
               <Textarea
                 id="description"
-                placeholder="A brief description of this memory vault..."
+                placeholder="A brief note about this missionary..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
+                rows={2}
               />
             </div>
           </div>

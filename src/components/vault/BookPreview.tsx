@@ -6,20 +6,28 @@ import { ChevronLeft, ChevronRight, BookOpen, X } from 'lucide-react';
 import { brandConfig } from '@/config/brandConfig';
 
 interface BookPreviewProps {
-  vaultTitle: string;
   recipientName: string;
+  missionName?: string | null;
+  serviceStartDate?: string | null;
+  serviceEndDate?: string | null;
   pages: Page[];
 }
 
-export function BookPreview({ vaultTitle, recipientName, pages }: BookPreviewProps) {
+export function BookPreview({ recipientName, missionName, serviceStartDate, serviceEndDate, pages }: BookPreviewProps) {
   const [currentSpread, setCurrentSpread] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Book structure: cover, then page spreads (2 pages per spread), then back cover
-  const totalSpreads = Math.ceil(pages.length / 2) + 2; // +2 for front and back cover
+  // Book structure: cover, dedication page, then page spreads (2 pages per spread), then back cover
+  const totalSpreads = Math.ceil(pages.length / 2) + 3; // +3 for front cover, dedication, and back cover
 
   const goToPrevious = () => setCurrentSpread((prev) => Math.max(0, prev - 1));
   const goToNext = () => setCurrentSpread((prev) => Math.min(totalSpreads - 1, prev + 1));
+
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
 
   const getSpreadContent = () => {
     if (currentSpread === 0) {
@@ -32,12 +40,36 @@ export function BookPreview({ vaultTitle, recipientName, pages }: BookPreviewPro
           {/* Right side - front cover */}
           <div className="w-1/2 bg-primary flex flex-col items-center justify-center text-primary-foreground p-8">
             <div className="text-center">
-              <p className="text-sm tracking-widest uppercase opacity-80 mb-4">
-                {brandConfig.name}
-              </p>
-              <h2 className="font-serif text-3xl md:text-4xl mb-2">{vaultTitle}</h2>
-              <p className="text-lg opacity-90">for {recipientName}</p>
+              <h2 className="font-serif text-3xl md:text-4xl mb-4">Mission Memory Vault</h2>
+              <p className="text-lg opacity-90">{recipientName}</p>
             </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentSpread === 1) {
+      // Dedication page with missionary info
+      return (
+        <div className="flex h-full">
+          {/* Left side - blank */}
+          <div className="w-1/2 bg-background border-r border-border" />
+          
+          {/* Right side - dedication/info page */}
+          <div className="w-1/2 bg-background flex flex-col items-center justify-center p-8 text-center">
+            <h3 className="font-serif text-2xl md:text-3xl mb-6 text-foreground">
+              {recipientName}
+            </h3>
+            {missionName && (
+              <p className="text-lg text-muted-foreground mb-2">
+                {missionName}
+              </p>
+            )}
+            {(serviceStartDate || serviceEndDate) && (
+              <p className="text-base text-muted-foreground">
+                {formatDate(serviceStartDate)} — {formatDate(serviceEndDate)}
+              </p>
+            )}
           </div>
         </div>
       );
@@ -61,8 +93,8 @@ export function BookPreview({ vaultTitle, recipientName, pages }: BookPreviewPro
       );
     }
 
-    // Content spreads
-    const pageIndex = (currentSpread - 1) * 2;
+    // Content spreads (offset by 2 for cover + dedication)
+    const pageIndex = (currentSpread - 2) * 2;
     const leftPage = pages[pageIndex];
     const rightPage = pages[pageIndex + 1];
 
@@ -109,9 +141,11 @@ export function BookPreview({ vaultTitle, recipientName, pages }: BookPreviewPro
               <span>
                 {currentSpread === 0 
                   ? 'Cover' 
-                  : currentSpread === totalSpreads - 1 
-                    ? 'Back Cover' 
-                    : `Pages ${(currentSpread - 1) * 2 + 1}-${Math.min((currentSpread - 1) * 2 + 2, pages.length)}`}
+                  : currentSpread === 1
+                    ? 'Dedication'
+                    : currentSpread === totalSpreads - 1 
+                      ? 'Back Cover' 
+                      : `Pages ${(currentSpread - 2) * 2 + 1}-${Math.min((currentSpread - 2) * 2 + 2, pages.length)}`}
               </span>
               <span className="text-muted-foreground/50">•</span>
               <span>{pages.length} total pages</span>
