@@ -14,6 +14,7 @@ export interface Page {
   status: string;
   created_at: string;
   updated_at: string;
+  contributor_name?: string | null;
 }
 
 export interface CreatePageInput {
@@ -34,7 +35,10 @@ export function usePages(vaultId: string | undefined) {
     setLoading(true);
     const { data, error } = await supabase
       .from('pages')
-      .select('*')
+      .select(`
+        *,
+        profiles!pages_contributor_id_fkey (full_name, email)
+      `)
       .eq('vault_id', vaultId)
       .order('page_order', { ascending: true });
 
@@ -42,7 +46,12 @@ export function usePages(vaultId: string | undefined) {
       console.error('Error fetching pages:', error);
       toast.error('Failed to load pages');
     } else {
-      setPages(data || []);
+      // Map the joined data to include contributor_name
+      const pagesWithNames = (data || []).map((page: any) => ({
+        ...page,
+        contributor_name: page.profiles?.full_name || page.profiles?.email || null,
+      }));
+      setPages(pagesWithNames);
     }
     setLoading(false);
   };

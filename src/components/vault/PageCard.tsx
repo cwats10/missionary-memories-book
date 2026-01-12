@@ -2,7 +2,7 @@ import { Page } from '@/hooks/usePages';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { GripVertical, Trash2, Edit, Send } from 'lucide-react';
+import { GripVertical, Trash2, Edit, Send, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -84,9 +84,16 @@ export function PageCard({
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
                     <h3 className="font-medium text-foreground truncate">{page.title || 'Untitled Memory'}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Added {formatDistanceToNow(new Date(page.created_at), { addSuffix: true })}
-                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {page.contributor_name && (
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {page.contributor_name}
+                        </span>
+                      )}
+                      <span>•</span>
+                      <span>Added {formatDistanceToNow(new Date(page.created_at), { addSuffix: true })}</span>
+                    </div>
                   </div>
 
                   {/* Approval Toggle for owners/managers */}
