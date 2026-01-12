@@ -193,7 +193,7 @@ const VaultDetail = () => {
                 pages={pages}
                 vaultType={vault.vault_type}
               />
-              {isOwner && <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />}
+              {isOwner && <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} purchased={vault.status === 'purchased'} />}
               {isOwner && <CheckoutDialog vaultTitle="Mission Memory Vault" pageCount={pages.length} />}
             </div>
           )}
