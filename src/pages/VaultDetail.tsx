@@ -49,6 +49,13 @@ const VaultDetail = () => {
   const [pageFilter, setPageFilter] = useState<PageFilter>('all');
 
   const isOwner = vault?.owner_id === user?.id;
+  const isContributor = !isOwner;
+
+  // For contributors, only show their own pages
+  const visiblePages = useMemo(() => {
+    if (isOwner) return pages;
+    return pages.filter(p => p.contributor_id === user?.id);
+  }, [pages, user, isOwner]);
 
   // Count pages created by current user for contributor limit check
   const userPageCount = useMemo(() => {
@@ -60,20 +67,21 @@ const VaultDetail = () => {
   const canCreateMorePages = isOwner || userPageCount < contributorPageLimit;
 
   const filteredPages = useMemo(() => {
+    const basePagesForFilter = visiblePages;
     switch (pageFilter) {
       case 'approved':
-        return pages.filter((p) => p.status === 'approved');
+        return basePagesForFilter.filter((p) => p.status === 'approved');
       case 'draft':
-        return pages.filter((p) => p.status === 'draft' || p.status === 'submitted');
+        return basePagesForFilter.filter((p) => p.status === 'draft' || p.status === 'submitted');
       default:
-        return pages;
+        return basePagesForFilter;
     }
-  }, [pages, pageFilter]);
+  }, [visiblePages, pageFilter]);
 
-  const approvedCount = useMemo(() => pages.filter((p) => p.status === 'approved').length, [pages]);
+  const approvedCount = useMemo(() => visiblePages.filter((p) => p.status === 'approved').length, [visiblePages]);
   const draftCount = useMemo(
-    () => pages.filter((p) => p.status === 'draft' || p.status === 'submitted').length,
-    [pages]
+    () => visiblePages.filter((p) => p.status === 'draft' || p.status === 'submitted').length,
+    [visiblePages]
   );
 
   if (authLoading || vaultLoading) {
@@ -115,7 +123,7 @@ const VaultDetail = () => {
   };
 
   const filterButtons: { key: PageFilter; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: pages.length },
+    { key: 'all', label: 'All', count: visiblePages.length },
     { key: 'approved', label: 'Approved', count: approvedCount },
     { key: 'draft', label: 'Drafts', count: draftCount },
   ];
@@ -145,31 +153,45 @@ const VaultDetail = () => {
 
           {/* Vault Header */}
           <div className="mb-10">
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <h1 className="font-serif text-4xl">Mission Memory Vault</h1>
-              <span className="text-xl text-muted-foreground">{vault.recipient_name}</span>
-              {vault.mission_name && <span className="text-muted-foreground">{vault.mission_name}</span>}
-            </div>
-            {vault.description && (
-              <p className="text-muted-foreground mt-3 max-w-2xl">{vault.description}</p>
+            {isOwner ? (
+              <>
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <h1 className="font-serif text-4xl">Mission Memory Vault</h1>
+                  <span className="text-xl text-muted-foreground">{vault.recipient_name}</span>
+                  {vault.mission_name && <span className="text-muted-foreground">{vault.mission_name}</span>}
+                </div>
+                {vault.description && (
+                  <p className="text-muted-foreground mt-3 max-w-2xl">{vault.description}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <h1 className="font-serif text-4xl mb-2">Contribute Your Memory</h1>
+                <p className="text-muted-foreground max-w-2xl">
+                  Add your special memories for {vault.recipient_name}. 
+                  You can create up to {contributorPageLimit} {contributorPageLimit === 1 ? 'page' : 'pages'}.
+                </p>
+              </>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap justify-center gap-3 mb-10 pb-10 border-b border-border">
-            <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
-            {isOwner && <InviteManagerDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />}
-            <BookPreview
-              recipientName={vault.recipient_name}
-              missionName={vault.mission_name}
-              serviceStartDate={vault.service_start_date}
-              serviceEndDate={vault.service_end_date}
-              pages={pages}
-              vaultType={vault.vault_type}
-            />
-            <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />
-            <CheckoutDialog vaultTitle="Mission Memory Vault" pageCount={pages.length} />
-          </div>
+          {/* Action Buttons - Owner only */}
+          {isOwner && (
+            <div className="flex flex-wrap justify-center gap-3 mb-10 pb-10 border-b border-border">
+              <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
+              <InviteManagerDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
+              <BookPreview
+                recipientName={vault.recipient_name}
+                missionName={vault.mission_name}
+                serviceStartDate={vault.service_start_date}
+                serviceEndDate={vault.service_end_date}
+                pages={pages}
+                vaultType={vault.vault_type}
+              />
+              <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} />
+              <CheckoutDialog vaultTitle="Mission Memory Vault" pageCount={pages.length} />
+            </div>
+          )}
 
           {/* Vault Settings - Owner only */}
           {isOwner && (
@@ -198,42 +220,46 @@ const VaultDetail = () => {
             </div>
           )}
 
-          {/* Title Page Section */}
-          <div className="mb-8">
-            <h2 className="font-serif text-xl mb-4">Title Page</h2>
-            <TitlePageCard vault={vault} isOwner={isOwner} onUpdate={refetchVault} />
-          </div>
+          {/* Title Page Section - Owner only */}
+          {isOwner && (
+            <div className="mb-8">
+              <h2 className="font-serif text-xl mb-4">Title Page</h2>
+              <TitlePageCard vault={vault} isOwner={isOwner} onUpdate={refetchVault} />
+            </div>
+          )}
 
           {/* Pages Section */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-serif text-xl">Memory Pages</h2>
+            <h2 className="font-serif text-xl">{isOwner ? 'Memory Pages' : 'Your Pages'}</h2>
             <div className="flex items-center gap-4">
-              {/* Status Filter Toggle */}
-              <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-                {filterButtons.map((btn) => (
-                  <button
-                    key={btn.key}
-                    type="button"
-                    onClick={() => setPageFilter(btn.key)}
-                    className={cn(
-                      'px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5',
-                      pageFilter === btn.key
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {btn.label}
-                    <span
+              {/* Status Filter Toggle - Owner only */}
+              {isOwner && (
+                <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                  {filterButtons.map((btn) => (
+                    <button
+                      key={btn.key}
+                      type="button"
+                      onClick={() => setPageFilter(btn.key)}
                       className={cn(
-                        'text-xs px-1.5 py-0.5 rounded-full',
-                        pageFilter === btn.key ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                        'px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5',
+                        pageFilter === btn.key
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
-                      {btn.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                      {btn.label}
+                      <span
+                        className={cn(
+                          'text-xs px-1.5 py-0.5 rounded-full',
+                          pageFilter === btn.key ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                        )}
+                      >
+                        {btn.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
               {canCreateMorePages ? (
                 <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
               ) : (
@@ -263,17 +289,21 @@ const VaultDetail = () => {
             <div className="text-center py-16 border border-dashed border-border rounded-lg">
               <BookOpen className="h-10 w-10 text-muted-foreground/50 mx-auto mb-4" />
               <h3 className="font-serif text-xl mb-2">
-                {pageFilter === 'all' ? 'No pages yet' : `No ${pageFilter} pages`}
+                {isOwner 
+                  ? (pageFilter === 'all' ? 'No pages yet' : `No ${pageFilter} pages`)
+                  : 'No pages yet'}
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                {pageFilter === 'all'
-                  ? 'Start adding memories to this vault. You can also invite friends and family to contribute.'
-                  : `There are no ${pageFilter} pages to display.`}
+                {isOwner
+                  ? (pageFilter === 'all'
+                    ? 'Start adding memories to this vault. You can also invite friends and family to contribute.'
+                    : `There are no ${pageFilter} pages to display.`)
+                  : `Add your special memory for ${vault.recipient_name}. Click the button to get started!`}
               </p>
-              {pageFilter === 'all' && canCreateMorePages && (
+              {(isOwner ? pageFilter === 'all' : true) && canCreateMorePages && (
                 <CreatePageDialog vaultId={vault.id} onCreatePage={createPage} />
               )}
-              {pageFilter === 'all' && !canCreateMorePages && (
+              {(isOwner ? pageFilter === 'all' : true) && !canCreateMorePages && (
                 <p className="text-sm text-muted-foreground">
                   You've reached your limit of {contributorPageLimit} {contributorPageLimit === 1 ? 'page' : 'pages'}.
                 </p>
@@ -281,10 +311,12 @@ const VaultDetail = () => {
             </div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground mb-4">Drag pages to reorder them in your book</p>
+              {isOwner && (
+                <p className="text-sm text-muted-foreground mb-4">Drag pages to reorder them in your book</p>
+              )}
               <SortablePageList
                 pages={filteredPages}
-                onReorder={reorderPages}
+                onReorder={isOwner ? reorderPages : undefined}
                 onDelete={handleDeletePage}
                 onEdit={handleEditPage}
                 onApprove={approvePage}

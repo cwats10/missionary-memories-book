@@ -4,7 +4,7 @@ import { PageCard } from './PageCard';
 
 interface SortablePageListProps {
   pages: Page[];
-  onReorder: (pages: Page[]) => Promise<{ error: Error | null }>;
+  onReorder?: (pages: Page[]) => Promise<{ error: Error | null }>;
   onDelete: (id: string) => Promise<void>;
   onEdit: (page: Page) => void;
   onApprove?: (id: string) => Promise<{ error: unknown }>;
@@ -28,13 +28,17 @@ export function SortablePageList({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
+  const canReorder = !!onReorder;
+
   const handleDragStart = (e: React.DragEvent, index: number) => {
+    if (!canReorder) return;
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', index.toString());
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
+    if (!canReorder) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverIndex(index);
@@ -47,7 +51,7 @@ export function SortablePageList({
   const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
 
-    if (draggedIndex === null || draggedIndex === dropIndex) {
+    if (!canReorder || draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
       return;
@@ -73,7 +77,7 @@ export function SortablePageList({
       {pages.map((page, index) => (
         <div
           key={page.id}
-          draggable
+          draggable={canReorder}
           onDragStart={(e) => handleDragStart(e, index)}
           onDragOver={(e) => handleDragOver(e, index)}
           onDragLeave={handleDragLeave}
@@ -81,7 +85,7 @@ export function SortablePageList({
           onDragEnd={handleDragEnd}
           className={`transition-all duration-150 ${
             dragOverIndex === index && draggedIndex !== index ? 'transform translate-y-1 opacity-70' : ''
-          } ${draggedIndex === index ? 'opacity-50' : ''}`}
+          } ${draggedIndex === index ? 'opacity-50' : ''} ${!canReorder ? 'cursor-default' : ''}`}
         >
           {dragOverIndex === index && draggedIndex !== null && draggedIndex !== index && (
             <div className="h-1 bg-primary/50 rounded-full mb-2 animate-pulse" />
