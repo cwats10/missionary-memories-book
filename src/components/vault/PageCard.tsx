@@ -90,11 +90,7 @@ export function PageCard({
 
                   {/* Approval Toggle for owners/managers */}
                   {isOwner && onApprove && onReject ? (
-                    <button
-                      type="button"
-                      onClick={handleToggleApproval}
-                      className="flex items-center gap-2 group/toggle"
-                    >
+                    <div className="flex items-center gap-2">
                       <span
                         className={`text-xs font-medium transition-colors ${
                           isApproved ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
@@ -107,7 +103,7 @@ export function PageCard({
                         onCheckedChange={handleToggleApproval}
                         className="data-[state=checked]:bg-green-600"
                       />
-                    </button>
+                    </div>
                   ) : (
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded-full ${
