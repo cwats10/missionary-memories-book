@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useVault } from '@/hooks/useVault';
-import { usePages } from '@/hooks/usePages';
+import { usePages, Page } from '@/hooks/usePages';
 import { Button } from '@/components/ui/button';
 import { brandConfig } from '@/config/brandConfig';
 import { CreatePageDialog } from '@/components/vault/CreatePageDialog';
 import { PageCard } from '@/components/vault/PageCard';
+import { EditPageDialog } from '@/components/vault/EditPageDialog';
 import { InviteDialog } from '@/components/vault/InviteDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
@@ -15,7 +17,9 @@ const VaultDetail = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { vault, loading: vaultLoading } = useVault(id);
-  const { pages, loading: pagesLoading, createPage, deletePage } = usePages(id);
+  const { pages, loading: pagesLoading, createPage, updatePage, deletePage } = usePages(id);
+  
+  const [editingPage, setEditingPage] = useState<Page | null>(null);
 
   if (authLoading || vaultLoading) {
     return (
@@ -45,6 +49,17 @@ const VaultDetail = () => {
     await deletePage(pageId);
   };
 
+  const handleEditPage = (page: Page) => {
+    setEditingPage(page);
+  };
+
+  const handleSavePage = async (pageId: string, updates: Partial<Page>) => {
+    const result = await updatePage(pageId, updates);
+    if (!result.error) {
+      setEditingPage(null);
+    }
+    return result;
+  };
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -154,12 +169,21 @@ const VaultDetail = () => {
                   page={page}
                   pageNumber={index + 1}
                   onDelete={handleDeletePage}
+                  onEdit={handleEditPage}
                 />
               ))}
             </div>
           )}
         </div>
       </main>
+
+      {/* Edit Page Dialog */}
+      <EditPageDialog
+        page={editingPage}
+        open={!!editingPage}
+        onOpenChange={(open) => !open && setEditingPage(null)}
+        onSave={handleSavePage}
+      />
     </div>
   );
 };
