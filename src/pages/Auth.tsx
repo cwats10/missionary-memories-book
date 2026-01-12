@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { brandConfig } from '@/config/brandConfig';
-import logo from '@/assets/logo.png';
 import { toast } from 'sonner';
 
 const Auth = () => {
@@ -60,13 +59,11 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16 bg-background">
-      {/* Logo */}
+      {/* Brand Name */}
       <div className="mb-8">
-        <img 
-          src={logo} 
-          alt={brandConfig.logo.alt}
-          className="h-24 w-auto"
-        />
+        <span className="font-serif text-3xl tracking-tight">
+          {brandConfig.name}
+        </span>
       </div>
 
       {/* Form Card */}
