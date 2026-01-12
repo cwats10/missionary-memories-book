@@ -175,7 +175,7 @@ export function BookPreview({
 
     return (
       <div className="flex h-full">
-        <div className="w-1/2 bg-background border-r border-border p-6 overflow-hidden">
+        <div className="w-1/2 bg-background border-r border-border p-4 overflow-hidden">
           {leftPage ? (
             <PageContent page={leftPage} pageNumber={pageIndex + 1} />
           ) : (
@@ -185,7 +185,7 @@ export function BookPreview({
           )}
         </div>
 
-        <div className="w-1/2 bg-background p-6 overflow-hidden">
+        <div className="w-1/2 bg-background p-4 overflow-hidden">
           {rightPage ? (
             <PageContent page={rightPage} pageNumber={pageIndex + 2} />
           ) : (
@@ -318,28 +318,42 @@ export function BookPreview({
 function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
   const imageAlt = page.title ? `Photo for ${page.title}` : "Memory photo";
   const images = page.image_urls?.length > 0 ? page.image_urls : page.image_url ? [page.image_url] : [];
+  const hasImages = images.length > 0;
+  const hasContent = page.content && page.content.trim().length > 0;
 
   return (
     <div className="h-full flex flex-col">
-      <div className="text-xs text-muted-foreground/50 mb-4 text-center">{pageNumber}</div>
+      {/* Page number - minimal space */}
+      <div className="text-[10px] text-muted-foreground/40 mb-2 text-center">{pageNumber}</div>
 
-      {images.length > 0 && (
-        <div className={`mb-4 flex-shrink-0 grid gap-2 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+      {/* Title - compact */}
+      <h3 className="font-serif text-base md:text-lg mb-2 text-foreground leading-tight">{page.title || "Untitled Memory"}</h3>
+
+      {/* Images - dynamic sizing based on content presence */}
+      {hasImages && (
+        <div className={`mb-2 flex-shrink grid gap-1.5 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
           {images.map((url, index) => (
             <img
               key={index}
               src={url}
               alt={`${imageAlt} ${index + 1}`}
               loading="lazy"
-              className={`w-full object-contain rounded bg-muted/30 ${images.length === 1 ? 'max-h-40 md:max-h-48' : 'max-h-24 md:max-h-32'}`}
+              className={`w-full object-contain rounded bg-muted/30 ${
+                hasContent 
+                  ? (images.length === 1 ? 'max-h-28 md:max-h-32' : 'max-h-20 md:max-h-24')
+                  : (images.length === 1 ? 'max-h-48 md:max-h-56' : 'max-h-32 md:max-h-40')
+              }`}
             />
           ))}
         </div>
       )}
 
-      <h3 className="font-serif text-lg md:text-xl mb-2 text-foreground">{page.title || "Untitled Memory"}</h3>
-
-      {page.content && <p className="text-sm text-muted-foreground leading-relaxed flex-1 overflow-y-auto">{page.content}</p>}
+      {/* Content text - fills remaining space */}
+      {hasContent && (
+        <p className="text-xs md:text-sm text-muted-foreground leading-relaxed flex-1 overflow-hidden">
+          {page.content}
+        </p>
+      )}
     </div>
   );
 }
