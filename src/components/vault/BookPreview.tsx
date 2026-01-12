@@ -35,17 +35,30 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
 
   const getSpreadContent = () => {
     if (currentSpread === 0) {
-      // Front cover
+      // Front cover - Deep Forest green with brand styling
       return (
         <div className="flex h-full">
-          {/* Left side - inside front cover (blank) */}
-          <div className="w-1/2 bg-secondary/30 border-r border-border" />
+          {/* Left side - inside front cover (blank parchment) */}
+          <div className="w-1/2 border-r border-border" style={{ backgroundColor: '#F4F1EC' }} />
           
           {/* Right side - front cover */}
-          <div className="w-1/2 bg-primary flex flex-col items-center justify-center text-primary-foreground p-8">
+          <div 
+            className="w-1/2 flex flex-col items-center justify-center p-8"
+            style={{ backgroundColor: '#2F3E36' }}
+          >
             <div className="text-center">
-              <h2 className="font-serif text-3xl md:text-4xl mb-4">Mission Memory Vault</h2>
-              <p className="text-lg opacity-90">{recipientName}</p>
+              <h2 
+                className="text-3xl md:text-4xl mb-4"
+                style={{ fontFamily: '"DM Serif Display", serif', color: '#F4F1EC' }}
+              >
+                Mission Memory Vault
+              </h2>
+              <p 
+                className="text-lg"
+                style={{ fontFamily: '"DM Serif Display", serif', color: '#F4F1EC', opacity: 0.85 }}
+              >
+                {recipientName}
+              </p>
             </div>
           </div>
         </div>
@@ -53,24 +66,36 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
     }
 
     if (currentSpread === 1) {
-      // Dedication page with missionary info
+      // Title page with missionary info - parchment background
       return (
         <div className="flex h-full">
-          {/* Left side - blank */}
-          <div className="w-1/2 bg-background border-r border-border" />
+          {/* Left side - blank parchment */}
+          <div className="w-1/2 border-r border-border" style={{ backgroundColor: '#F4F1EC' }} />
           
-          {/* Right side - dedication/info page */}
-          <div className="w-1/2 bg-background flex flex-col items-center justify-center p-8 text-center">
-            <h3 className="font-serif text-2xl md:text-3xl mb-6 text-foreground">
+          {/* Right side - title/info page */}
+          <div 
+            className="w-1/2 flex flex-col items-center justify-center p-8 text-center"
+            style={{ backgroundColor: '#F4F1EC' }}
+          >
+            <h3 
+              className="text-2xl md:text-3xl mb-6"
+              style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A' }}
+            >
               {recipientName}
             </h3>
             {missionName && (
-              <p className="text-lg text-muted-foreground mb-2">
+              <p 
+                className="text-lg mb-2"
+                style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A', opacity: 0.8 }}
+              >
                 {missionName}
               </p>
             )}
             {(serviceStartDate || serviceEndDate) && (
-              <p className="text-base text-muted-foreground">
+              <p 
+                className="text-base"
+                style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A', opacity: 0.7 }}
+              >
                 {formatDate(serviceStartDate)} — {formatDate(serviceEndDate)}
               </p>
             )}
@@ -80,18 +105,39 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
     }
 
     if (currentSpread === totalSpreads - 1) {
-      // Back cover
+      // Back cover - Deep Forest green
       return (
         <div className="flex h-full">
-          {/* Left side - last page or blank */}
-          <div className="w-1/2 bg-background border-r border-border flex items-center justify-center">
-            <p className="text-muted-foreground/50 text-sm italic">End of memories</p>
+          {/* Left side - end page parchment */}
+          <div 
+            className="w-1/2 border-r border-border flex items-center justify-center"
+            style={{ backgroundColor: '#F4F1EC' }}
+          >
+            <p 
+              className="text-sm italic"
+              style={{ fontFamily: '"DM Serif Display", serif', color: '#2B2B2A', opacity: 0.5 }}
+            >
+              End of memories
+            </p>
           </div>
           
           {/* Right side - back cover */}
-          <div className="w-1/2 bg-primary flex flex-col items-center justify-center text-primary-foreground p-8">
-            <p className="font-serif text-xl mb-2">{brandConfig.name}</p>
-            <p className="text-sm opacity-70">missionmemoryvault.com</p>
+          <div 
+            className="w-1/2 flex flex-col items-center justify-center p-8"
+            style={{ backgroundColor: '#2F3E36' }}
+          >
+            <p 
+              className="text-xl mb-2"
+              style={{ fontFamily: '"DM Serif Display", serif', color: '#F4F1EC' }}
+            >
+              {brandConfig.name}
+            </p>
+            <p 
+              className="text-sm"
+              style={{ color: '#F4F1EC', opacity: 0.7 }}
+            >
+              missionmemoryvault.com
+            </p>
           </div>
         </div>
       );
@@ -134,9 +180,7 @@ export function BookPreview({ recipientName, missionName, serviceStartDate, serv
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        // Default to the title page spread when opening
-        if (open) setCurrentSpread(1);
-        else setCurrentSpread(0);
+        if (!open) setCurrentSpread(0);
       }}
     >
       <DialogTrigger asChild>
