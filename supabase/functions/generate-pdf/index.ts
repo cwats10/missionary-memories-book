@@ -134,6 +134,10 @@ serve(async (req) => {
       color: coverColors.text,
     });
 
+    // Interior page colors - consistent across all vaults
+    const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
+    const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
+
     // Add title page (dedication page)
     const titlePage = pdfDoc.addPage([pageWidth, pageHeight]);
     titlePage.drawRectangle({
@@ -141,7 +145,7 @@ serve(async (req) => {
       y: 0,
       width: pageWidth,
       height: pageHeight,
-      color: rgb(1, 1, 1), // White background
+      color: interiorBg,
     });
 
     // Recipient name
@@ -152,7 +156,7 @@ serve(async (req) => {
       y: pageHeight / 2 + 60,
       size: recipientFontSize,
       font: timesRomanBold,
-      color: rgb(0.2, 0.15, 0.1),
+      color: interiorText,
     });
 
     // Mission name
@@ -164,7 +168,7 @@ serve(async (req) => {
         y: pageHeight / 2 + 20,
         size: missionFontSize,
         font: timesRoman,
-        color: rgb(0.4, 0.35, 0.3),
+        color: interiorText,
       });
     }
 
@@ -183,7 +187,7 @@ serve(async (req) => {
         y: pageHeight / 2 - 20,
         size: datesFontSize,
         font: timesRoman,
-        color: rgb(0.5, 0.45, 0.4),
+        color: interiorText,
       });
     }
 
@@ -191,6 +195,15 @@ serve(async (req) => {
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
       const contentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      // Draw background
+      contentPage.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
+        color: interiorBg,
+      });
       
       let yPosition = pageHeight - margin;
 
@@ -202,7 +215,7 @@ serve(async (req) => {
           y: yPosition,
           size: 24,
           font: timesRomanBold,
-          color: rgb(0.2, 0.15, 0.1),
+          color: interiorText,
         });
         yPosition -= 40;
       }
@@ -286,7 +299,7 @@ serve(async (req) => {
               y: yPosition,
               size: fontSize,
               font: timesRoman,
-              color: rgb(0.2, 0.2, 0.2),
+              color: interiorText,
             });
             yPosition -= lineHeight;
             currentLine = word;
@@ -307,10 +320,58 @@ serve(async (req) => {
             y: yPosition,
             size: fontSize,
             font: timesRoman,
-            color: rgb(0.2, 0.2, 0.2),
+            color: interiorText,
           });
         }
       }
+    }
+
+    // Add closing message page
+    const closingPage = pdfDoc.addPage([pageWidth, pageHeight]);
+    closingPage.drawRectangle({
+      x: 0,
+      y: 0,
+      width: pageWidth,
+      height: pageHeight,
+      color: interiorBg,
+    });
+    
+    const closingMessage = 'The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever.';
+    const closingFontSize = 16;
+    const closingMaxWidth = pageWidth - (margin * 2);
+    const closingWords = closingMessage.split(' ');
+    let closingLine = '';
+    let closingY = pageHeight / 2 + 20;
+    
+    for (const word of closingWords) {
+      const testLine = closingLine ? `${closingLine} ${word}` : word;
+      const testWidth = timesRoman.widthOfTextAtSize(testLine, closingFontSize);
+      
+      if (testWidth > closingMaxWidth && closingLine) {
+        const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingFontSize);
+        closingPage.drawText(closingLine, {
+          x: (pageWidth - lineWidth) / 2,
+          y: closingY,
+          size: closingFontSize,
+          font: timesRoman,
+          color: interiorText,
+        });
+        closingY -= 24;
+        closingLine = word;
+      } else {
+        closingLine = testLine;
+      }
+    }
+    
+    if (closingLine) {
+      const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingFontSize);
+      closingPage.drawText(closingLine, {
+        x: (pageWidth - lineWidth) / 2,
+        y: closingY,
+        size: closingFontSize,
+        font: timesRoman,
+        color: interiorText,
+      });
     }
 
     // Add back cover
