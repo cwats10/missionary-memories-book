@@ -104,12 +104,12 @@ export function BookPreview({
 
           {/* Front cover */}
           <div
-            className="w-1/2 flex flex-col items-center justify-center p-8"
+            className="w-1/2 flex flex-col items-center justify-center px-12"
             style={{ backgroundColor: coverColors.bg }}
           >
             <div className="text-center">
               <h2
-                className="font-serif text-3xl md:text-4xl"
+                className="font-serif text-xl md:text-2xl"
                 style={{ color: coverColors.text }}
               >
                 Mission Memory Vault

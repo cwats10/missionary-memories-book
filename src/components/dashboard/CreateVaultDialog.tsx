@@ -131,11 +131,11 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
                 >
                   {/* Book cover preview */}
                   <div
-                    className="w-16 h-20 rounded flex items-center justify-center shadow-sm flex-shrink-0"
+                    className="w-16 h-20 rounded flex items-center justify-center shadow-sm flex-shrink-0 px-2"
                     style={{ backgroundColor: vault.color }}
                   >
                     <span
-                      className="text-[6px] font-serif text-center px-1 leading-tight"
+                      className="text-[5px] font-serif text-center leading-tight"
                       style={{ color: vault.textColor }}
                     >
                       Mission Memory Vault
