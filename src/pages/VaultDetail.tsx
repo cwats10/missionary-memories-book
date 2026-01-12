@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { brandConfig } from '@/config/brandConfig';
 import { CreatePageDialog } from '@/components/vault/CreatePageDialog';
 import { PageCard } from '@/components/vault/PageCard';
+import { InviteDialog } from '@/components/vault/InviteDialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Users, BookOpen, Settings } from 'lucide-react';
+import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 
 const VaultDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -87,10 +88,7 @@ const VaultDetail = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Users className="h-4 w-4" />
-                  Invite
-                </Button>
+                <InviteDialog vaultId={vault.id} vaultTitle={vault.title} />
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <Settings className="h-4 w-4" />
                 </Button>
