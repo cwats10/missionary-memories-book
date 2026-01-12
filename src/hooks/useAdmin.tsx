@@ -43,7 +43,7 @@ export interface SupportTicket {
 }
 
 export const useAdmin = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -53,25 +53,38 @@ export const useAdmin = () => {
   // Check if current user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
+      // Wait until auth has finished initializing, otherwise we can incorrectly
+      // redirect away from /admin before the session is hydrated.
+      if (authLoading) return;
+
       if (!user) {
         setIsAdmin(false);
         setLoading(false);
         return;
       }
 
-      const { data } = await supabase
+      setLoading(true);
+
+      const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .eq('role', 'admin')
         .maybeSingle();
 
-      setIsAdmin(!!data);
+      if (error) {
+        console.error('Admin check failed:', error);
+        toast.error('Unable to verify admin access.');
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(!!data);
+      }
+
       setLoading(false);
     };
 
     checkAdminStatus();
-  }, [user]);
+  }, [user, authLoading]);
 
   // Fetch all users with their data
   const fetchUsers = async () => {
