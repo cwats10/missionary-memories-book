@@ -29,7 +29,11 @@ export function InviteDialog({ vaultId, vaultTitle }: InviteDialogProps) {
   const activeInvites = invites.filter((inv) => inv.is_active && inv.role === 'contributor');
 
   const getInviteUrl = (code: string) => {
-    return `${window.location.origin}/invite/${code}`;
+    // Use the published URL for invite links so they work for external users
+    const baseUrl = import.meta.env.PROD 
+      ? window.location.origin 
+      : 'https://missionary-memories-book.lovable.app';
+    return `${baseUrl}/invite/${code}`;
   };
 
   const copyToClipboard = async (invite: InviteLink) => {
