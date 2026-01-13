@@ -5,6 +5,8 @@ import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  // Allow the browser to read the filename from Content-Disposition
+  'Access-Control-Expose-Headers': 'content-disposition',
 };
 
 // Book size dimensions in points (72 points = 1 inch)
@@ -212,8 +214,9 @@ serve(async (req) => {
         const y = (pageHeight - drawH) / 2;
 
         page.drawImage(img, { x, y, width: drawW, height: drawH });
-      } catch (_e) {
+      } catch (e) {
         // If this fails for any reason, fall back to solid color.
+        console.error('Cover embed failed:', url, e);
       }
     };
 
@@ -496,22 +499,21 @@ serve(async (req) => {
 
     // Serialize PDF
     const pdfBytes = await pdfDoc.save();
-    
-    // Convert to base64 in chunks to avoid stack overflow
-    const uint8Array = new Uint8Array(pdfBytes);
-    let binaryString = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-      binaryString += String.fromCharCode(...chunk);
-    }
-    const base64Pdf = btoa(binaryString);
 
-    return new Response(JSON.stringify({ 
-      pdf: base64Pdf,
-      filename: `${vault.title.replace(/[^a-zA-Z0-9]/g, '-')}-memory-book.pdf`
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Normalize to a plain Uint8Array backed by ArrayBuffer (avoids Deno typecheck issues)
+    const pdfBody = new Uint8Array(pdfBytes);
+
+    const filename = `${vault.title.replace(/[^a-zA-Z0-9]/g, '-')}-memory-book.pdf`;
+
+    // Return as binary to avoid expensive base64 conversion (prevents WORKER_LIMIT)
+    return new Response(pdfBody, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store',
+      },
     });
 
   } catch (error) {

@@ -15,24 +15,28 @@ export function usePdfGeneration() {
         return null;
       }
 
-      const response = await supabase.functions.invoke('generate-pdf', {
-        body: { vaultId },
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ vaultId }),
       });
 
-      if (response.error) {
-        throw new Error(response.error.message);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(errorText || `PDF generation failed (${response.status})`);
       }
 
-      const { pdf, filename } = response.data;
-      
-      // Convert base64 to blob
-      const binaryString = atob(pdf);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      
+      const blob = await response.blob();
+
+      // Try to read filename from Content-Disposition; fall back to a sensible default
+      const disposition = response.headers.get('content-disposition') || '';
+      const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+      const filename = decodeURIComponent(match?.[1] || match?.[2] || 'memory-book.pdf');
+
       // Create download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
