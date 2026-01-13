@@ -94,7 +94,7 @@ serve(async (req) => {
       });
     }
 
-    const { vaultId } = await req.json();
+    const { vaultId, coverBgPngBase64 } = await req.json();
     if (!vaultId) {
       return new Response(JSON.stringify({ error: 'Vault ID required' }), {
         status: 400,
@@ -172,20 +172,14 @@ serve(async (req) => {
     const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
     const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
 
-    // Try to match the web preview cover textures by loading static assets from the site origin.
-    const requestOrigin = req.headers.get('origin') ?? '';
-    const getCoverBgUrl = (vaultType: string) => {
-      if (!requestOrigin) return null;
-      switch (vaultType) {
-        case 'farewell':
-          return `${requestOrigin}/covers/farewell-cover-bg.png`;
-        case 'homecoming':
-          return `${requestOrigin}/covers/homecoming-cover-bg.png`;
-        case 'returned':
-          return `${requestOrigin}/covers/returned-cover-bg.png`;
-        default:
-          return null;
-      }
+    // Cover background image: we pass the exact PNG bytes from the client so the
+    // downloaded PDF always matches the in-app preview (no flaky network fetches).
+    const decodeBase64Png = (value: string) => {
+      const b64 = value.includes(',') ? (value.split(',').pop() || '') : value;
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
     };
 
     const drawCoverBackground = async (page: any) => {
@@ -198,17 +192,10 @@ serve(async (req) => {
         color: coverColors.bg,
       });
 
-      const bgUrl = getCoverBgUrl(vault.vault_type || 'farewell');
-      if (!bgUrl) return;
+      if (!coverBgPngBase64) return;
 
       try {
-        const res = await fetch(bgUrl);
-        if (!res.ok) {
-          console.error('Cover texture fetch failed:', bgUrl, res.status);
-          return;
-        }
-        const bytes = await res.arrayBuffer();
-        const img = await pdfDoc.embedPng(bytes);
+        const img = await pdfDoc.embedPng(decodeBase64Png(coverBgPngBase64));
 
         // "cover" fit (like CSS background-size: cover)
         const scale = Math.max(pageWidth / img.width, pageHeight / img.height);
