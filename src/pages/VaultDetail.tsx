@@ -17,6 +17,9 @@ import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { compressImageBlobToJpeg } from '@/lib/imageCompression';
 import {
   Select,
   SelectContent,
@@ -43,6 +46,7 @@ const VaultDetail = () => {
     rejectPage,
     unapprove,
     submitPage,
+    refetch: refetchPages,
   } = usePages(id);
 
   const [editingPage, setEditingPage] = useState<Page | null>(null);
@@ -86,6 +90,13 @@ const VaultDetail = () => {
     [visiblePages]
   );
 
+  const needsImageOptimization = useMemo(() => {
+    return pages.some((p) => {
+      const urls = p.image_urls?.length ? p.image_urls : p.image_url ? [p.image_url] : [];
+      return urls.some((u) => !/\.jpe?g(\?|$)/i.test(u));
+    });
+  }, [pages]);
+
   if (authLoading || vaultLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -114,6 +125,94 @@ const VaultDetail = () => {
 
   const handleEditPage = (page: Page) => {
     setEditingPage(page);
+  };
+
+  const handleOptimizeImages = async () => {
+    if (!user) return;
+
+    setOptimizingImages(true);
+
+    try {
+      let optimizedCount = 0;
+
+      for (const p of pages) {
+        const urls = p.image_urls?.length ? p.image_urls : p.image_url ? [p.image_url] : [];
+        if (urls.length === 0) continue;
+
+        let changed = false;
+        const newUrls: string[] = [];
+
+        for (const url of urls) {
+          // Already JPEG? keep.
+          if (/\.jpe?g(\?|$)/i.test(url)) {
+            newUrls.push(url);
+            continue;
+          }
+
+          try {
+            const res = await fetch(url);
+            if (!res.ok) {
+              newUrls.push(url);
+              continue;
+            }
+
+            const blob = await res.blob();
+            const jpgBlob = await compressImageBlobToJpeg(blob, { maxDimension: 1200, quality: 0.8 });
+
+            const fileName = `${user.id}/optimized/${Date.now()}-${crypto.randomUUID()}.jpg`;
+            const { error: uploadError } = await supabase.storage
+              .from('page-images')
+              .upload(fileName, jpgBlob, { contentType: 'image/jpeg', upsert: true });
+
+            if (uploadError) {
+              console.error('Optimize upload error:', uploadError);
+              newUrls.push(url);
+              continue;
+            }
+
+            const {
+              data: { publicUrl },
+            } = supabase.storage.from('page-images').getPublicUrl(fileName);
+
+            newUrls.push(publicUrl);
+            changed = true;
+            optimizedCount += 1;
+          } catch (e) {
+            console.error('Optimize image failed:', e);
+            newUrls.push(url);
+          }
+        }
+
+        if (changed) {
+          // Update without spamming per-page toasts
+          const { error } = await supabase
+            .from('pages')
+            .update({
+              image_urls: newUrls,
+              image_url: newUrls[0] || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', p.id);
+
+          if (error) {
+            console.error('Failed updating page after optimize:', error);
+          }
+        }
+      }
+
+      await refetchPages();
+
+      toast.success(
+        optimizedCount > 0
+          ? `Optimized ${optimizedCount} image${optimizedCount === 1 ? '' : 's'}. Try downloading the PDF again.`
+          : 'No images needed optimization.'
+      );
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to optimize images');
+    } finally {
+      setOptimizingImages(false);
+    }
   };
 
   const handleSavePage = async (pageId: string, updates: Partial<Page>) => {

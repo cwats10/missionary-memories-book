@@ -2,65 +2,11 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { compressImageBlobToJpeg } from '@/lib/imageCompression';
 
 // Maximum dimensions for uploaded images (keeps file size manageable for PDF generation)
 const MAX_IMAGE_DIMENSION = 1200;
 const JPEG_QUALITY = 0.8;
-
-/**
- * Compresses an image file by resizing and converting to JPEG.
- * This significantly reduces file size for PDF generation.
- */
-async function compressImage(file: File): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    img.onload = () => {
-      let { width, height } = img;
-
-      // Scale down if larger than max dimension
-      if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
-        if (width > height) {
-          height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
-          width = MAX_IMAGE_DIMENSION;
-        } else {
-          width = Math.round((width * MAX_IMAGE_DIMENSION) / height);
-          height = MAX_IMAGE_DIMENSION;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
-
-      // Draw with white background (for transparent PNGs)
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, width, height);
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to compress image'));
-          }
-        },
-        'image/jpeg',
-        JPEG_QUALITY
-      );
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
-  });
-}
 
 export function useImageUpload() {
   const { user } = useAuth();
@@ -88,7 +34,10 @@ export function useImageUpload() {
 
     try {
       // Compress image before upload
-      const compressedBlob = await compressImage(file);
+      const compressedBlob = await compressImageBlobToJpeg(file, {
+        maxDimension: MAX_IMAGE_DIMENSION,
+        quality: JPEG_QUALITY,
+      });
       
       // Always save as JPEG after compression
       const fileName = `${user.id}/${Date.now()}.jpg`;

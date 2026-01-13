@@ -174,15 +174,57 @@ serve(async (req) => {
     const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
     const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
 
-    // Cover background images are fetched from Supabase Storage (cover-images bucket).
+    // Cover background images are fetched from Storage (cover-images bucket).
     // This avoids sending large base64 payloads from the client.
-    const getCoverStorageUrl = (vaultType: string) => {
-      const fileName = vaultType === 'homecoming'
-        ? 'homecoming-cover-bg.png'
+    // PERFORMANCE: we fetch+embed the cover image ONCE and reuse it for front/back cover.
+    const getCoverStorageUrls = (vaultType: string) => {
+      const baseName = vaultType === 'homecoming'
+        ? 'homecoming-cover-bg'
         : vaultType === 'returned'
-          ? 'returned-cover-bg.png'
-          : 'farewell-cover-bg.png';
-      return `${supabaseUrl}/storage/v1/object/public/cover-images/${fileName}`;
+          ? 'returned-cover-bg'
+          : 'farewell-cover-bg';
+
+      // Prefer JPG (faster/lighter to decode/embed), fall back to legacy PNG.
+      return [
+        `${supabaseUrl}/storage/v1/object/public/cover-images/${baseName}.jpg`,
+        `${supabaseUrl}/storage/v1/object/public/cover-images/${baseName}.png`,
+      ];
+    };
+
+    const coverImageUrls = getCoverStorageUrls(vault.vault_type || 'farewell');
+    let cachedCoverImage: any | null = null;
+
+    const loadCoverImage = async () => {
+      if (cachedCoverImage) return cachedCoverImage;
+
+      for (const url of coverImageUrls) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+
+          const bytes = new Uint8Array(await res.arrayBuffer());
+          const contentType = res.headers.get('content-type') || '';
+
+          if (contentType.includes('png')) {
+            cachedCoverImage = await pdfDoc.embedPng(bytes);
+          } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
+            cachedCoverImage = await pdfDoc.embedJpg(bytes);
+          } else {
+            // Best effort: try PNG then JPG
+            try {
+              cachedCoverImage = await pdfDoc.embedPng(bytes);
+            } catch {
+              cachedCoverImage = await pdfDoc.embedJpg(bytes);
+            }
+          }
+
+          return cachedCoverImage;
+        } catch (e) {
+          console.error('Cover load failed:', url, e);
+        }
+      }
+
+      return null;
     };
 
     const drawCoverBackground = async (page: any) => {
@@ -195,16 +237,9 @@ serve(async (req) => {
         color: coverColors.bg,
       });
 
-      const url = getCoverStorageUrl(vault.vault_type || 'farewell');
-
       try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.error('Cover fetch failed:', url, res.status);
-          return;
-        }
-        const bytes = new Uint8Array(await res.arrayBuffer());
-        const img = await pdfDoc.embedPng(bytes);
+        const img = await loadCoverImage();
+        if (!img) return;
 
         // "cover" fit (like CSS background-size: cover)
         const scale = Math.max(pageWidth / img.width, pageHeight / img.height);
@@ -216,7 +251,7 @@ serve(async (req) => {
         page.drawImage(img, { x, y, width: drawW, height: drawH });
       } catch (e) {
         // If this fails for any reason, fall back to solid color.
-        console.error('Cover embed failed:', url, e);
+        console.error('Cover embed failed:', e);
       }
     };
 
