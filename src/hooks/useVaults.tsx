@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
 export type VaultType = 'farewell' | 'homecoming' | 'returned';
-export type BookSize = '9x9' | '12x12' | 'a4' | 'a5';
+export type BookSize = '9x9' | '12x12' | '9x11' | '11x9' | 'a4' | 'a5';
 
 export interface Vault {
   id: string;
