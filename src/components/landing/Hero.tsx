@@ -47,7 +47,7 @@ const Hero = () => {
         {/* CTA - an invitation, not a command */}
         <div className="flex flex-col sm:flex-row gap-4">
           <a 
-            href="/auth" 
+            href="/auth?mode=signup" 
             className="inline-flex items-center justify-center px-8 py-4 bg-primary text-primary-foreground font-medium text-lg rounded transition-all duration-300 hover:opacity-90 hover:scale-[1.02]"
           >
             {brandConfig.copy.cta.primary}
