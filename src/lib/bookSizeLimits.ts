@@ -18,6 +18,18 @@ export const getCharacterLimits = (bookSize: BookSize = '9x9') => {
         noImages: 1700,
         withImages: 750,
       };
+    case '9x11':
+      // 9x11 landscape has ~22% more area than 9x9
+      return {
+        noImages: 1850,
+        withImages: 800,
+      };
+    case '11x9':
+      // 11x9 portrait has ~22% more area than 9x9
+      return {
+        noImages: 1850,
+        withImages: 800,
+      };
     case 'a4':
       // A4 (210x297mm) has ~67% more area than 9x9 (229x229mm)
       return {
@@ -44,6 +56,10 @@ export const getBookSizeLabel = (bookSize: BookSize): string => {
       return '9×9" Square';
     case '12x12':
       return '12×12" Square';
+    case '9x11':
+      return '9×11" Landscape';
+    case '11x9':
+      return '11×9" Portrait';
     case 'a4':
       return 'A4 Portrait';
     case 'a5':

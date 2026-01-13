@@ -27,6 +27,20 @@ const getBookDimensions = (bookSize: string) => {
         height: 12 * 72, // 864 points
         margin: mmToPoints(10),
       };
+    case '9x11':
+      // 9x11 inches landscape = 229x279mm
+      return {
+        width: 11 * 72,  // 792 points (width is 11")
+        height: 9 * 72,  // 648 points (height is 9")
+        margin: mmToPoints(10),
+      };
+    case '11x9':
+      // 11x9 inches portrait = 279x229mm
+      return {
+        width: 9 * 72,   // 648 points (width is 9")
+        height: 11 * 72, // 792 points (height is 11")
+        margin: mmToPoints(10),
+      };
     case 'a4':
       // A4 Portrait: 210x297mm = 8.27x11.69 inches
       return {
@@ -431,6 +445,19 @@ serve(async (req) => {
       height: pageHeight,
       color: coverColors.bg,
     });
+
+    // Prodigi requires even page count - add blank page if needed
+    const totalPages = pdfDoc.getPageCount();
+    if (totalPages % 2 !== 0) {
+      const blankPage = pdfDoc.addPage([pageWidth, pageHeight]);
+      blankPage.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
+        color: interiorBg, // Use interior color for blank padding page
+      });
+    }
 
     // Serialize PDF
     const pdfBytes = await pdfDoc.save();
