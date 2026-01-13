@@ -36,16 +36,24 @@ const Pricing = () => {
             <p className="font-serif text-4xl mb-2">${pricing.printedBase}</p>
             <p className="text-muted-foreground text-sm mb-6">+ ${pricing.perPage}/page</p>
             <ul className="text-left text-muted-foreground space-y-3 text-sm">
-              <li>• Premium hardcover binding</li>
-              <li>• Archival-quality paper</li>
-              <li>• PDF included</li>
+              <li>• Premium layflat hardcover binding</li>
+              <li>• Archival 170gsm silk paper</li>
+              <li>• PDF included free</li>
               <li>• Shipped with care</li>
             </ul>
           </div>
         </div>
 
+        {/* Value explanation - why it costs what it does */}
+        <div className="text-center mt-16 max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+            Each book is printed on-demand by professional print partners using archival materials. 
+            The price reflects museum-quality construction designed to last generations—not mass-produced shortcuts.
+          </p>
+        </div>
+
         {/* Referral mention */}
-        <div className="text-center mt-16 p-8 bg-muted/50 rounded max-w-xl mx-auto">
+        <div className="text-center p-8 bg-muted/50 rounded max-w-xl mx-auto">
           <p className="text-muted-foreground">
             <span className="font-medium text-foreground">Share the love:</span> After your purchase, 
             receive a referral code worth ${pricing.referralDiscount} off for friends—and earn ${pricing.referralCredit} credit 
