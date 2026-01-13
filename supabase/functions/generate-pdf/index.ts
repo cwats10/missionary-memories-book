@@ -7,6 +7,50 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Book size dimensions in points (72 points = 1 inch)
+// Prodigi specs: no bleed needed (auto-generated), 10mm safety margin
+const getBookDimensions = (bookSize: string) => {
+  const mmToPoints = (mm: number) => mm * 2.83465; // 1mm = 2.83465 points
+  
+  switch (bookSize) {
+    case '9x9':
+      // 9x9 inches = 229x229mm
+      return {
+        width: 9 * 72,  // 648 points
+        height: 9 * 72, // 648 points
+        margin: mmToPoints(10), // 10mm safety margin (~28.35 points)
+      };
+    case '12x12':
+      // 12x12 inches = 305x305mm
+      return {
+        width: 12 * 72,  // 864 points
+        height: 12 * 72, // 864 points
+        margin: mmToPoints(10),
+      };
+    case 'a4':
+      // A4 Portrait: 210x297mm = 8.27x11.69 inches
+      return {
+        width: mmToPoints(210),  // ~595 points
+        height: mmToPoints(297), // ~842 points
+        margin: mmToPoints(10),
+      };
+    case 'a5':
+      // A5: 148x210mm = 5.83x8.27 inches
+      return {
+        width: mmToPoints(148),  // ~420 points
+        height: mmToPoints(210), // ~595 points
+        margin: mmToPoints(10),
+      };
+    default:
+      // Default to 9x9
+      return {
+        width: 9 * 72,
+        height: 9 * 72,
+        margin: mmToPoints(10),
+      };
+  }
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -58,11 +102,12 @@ serve(async (req) => {
       });
     }
 
-    // Fetch pages
+    // Fetch approved pages only
     const { data: pages, error: pagesError } = await supabase
       .from('pages')
       .select('*')
       .eq('vault_id', vaultId)
+      .eq('status', 'approved')
       .order('page_order', { ascending: true });
 
     if (pagesError) {
@@ -72,15 +117,14 @@ serve(async (req) => {
       });
     }
 
-    // Create PDF document (8.5 x 11 inches at 72 DPI for preview, scaled for 300 DPI print)
+    // Create PDF document
     const pdfDoc = await PDFDocument.create();
     const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
     const timesRomanBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     
-    // Page dimensions (letter size)
-    const pageWidth = 612; // 8.5 inches * 72
-    const pageHeight = 792; // 11 inches * 72
-    const margin = 72; // 1 inch margins
+    // Get dimensions based on book size
+    const bookSize = vault.book_size || '9x9';
+    const { width: pageWidth, height: pageHeight, margin } = getBookDimensions(bookSize);
 
     // Get cover colors based on vault type
     const getCoverColors = (vaultType: string) => {
@@ -110,6 +154,20 @@ serve(async (req) => {
 
     const coverColors = getCoverColors(vault.vault_type || 'farewell');
 
+    // Interior page colors - consistent across all vaults: #F4F1EC background, #2B2B2A text
+    const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
+    const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
+
+    // Calculate font sizes relative to page size (scale based on 9x9 base)
+    const scaleFactor = Math.min(pageWidth, pageHeight) / 648; // 648 = 9 inches * 72
+    const coverTitleSize = Math.round(36 * scaleFactor);
+    const recipientSize = Math.round(28 * scaleFactor);
+    const missionSize = Math.round(18 * scaleFactor);
+    const datesSize = Math.round(14 * scaleFactor);
+    const contentTitleSize = Math.round(24 * scaleFactor);
+    const contentBodySize = Math.round(14 * scaleFactor);
+    const closingSize = Math.round(16 * scaleFactor);
+
     // Create cover page
     const coverPage = pdfDoc.addPage([pageWidth, pageHeight]);
     
@@ -124,21 +182,16 @@ serve(async (req) => {
 
     // Cover title - just "Mission Memory Vault" centered
     const titleText = 'Mission Memory Vault';
-    const titleFontSize = 36;
-    const titleWidth = timesRomanBold.widthOfTextAtSize(titleText, titleFontSize);
+    const titleWidth = timesRomanBold.widthOfTextAtSize(titleText, coverTitleSize);
     coverPage.drawText(titleText, {
       x: (pageWidth - titleWidth) / 2,
       y: pageHeight / 2,
-      size: titleFontSize,
+      size: coverTitleSize,
       font: timesRomanBold,
       color: coverColors.text,
     });
 
-    // Interior page colors - consistent across all vaults
-    const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
-    const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
-
-    // Add title page (dedication page)
+    // Add title page (dedication page) with interior colors
     const titlePage = pdfDoc.addPage([pageWidth, pageHeight]);
     titlePage.drawRectangle({
       x: 0,
@@ -149,24 +202,22 @@ serve(async (req) => {
     });
 
     // Recipient name
-    const recipientFontSize = 28;
-    const recipientWidth = timesRomanBold.widthOfTextAtSize(vault.recipient_name, recipientFontSize);
+    const recipientWidth = timesRomanBold.widthOfTextAtSize(vault.recipient_name, recipientSize);
     titlePage.drawText(vault.recipient_name, {
       x: (pageWidth - recipientWidth) / 2,
-      y: pageHeight / 2 + 60,
-      size: recipientFontSize,
+      y: pageHeight / 2 + 60 * scaleFactor,
+      size: recipientSize,
       font: timesRomanBold,
       color: interiorText,
     });
 
     // Mission name
     if (vault.mission_name) {
-      const missionFontSize = 18;
-      const missionWidth = timesRoman.widthOfTextAtSize(vault.mission_name, missionFontSize);
+      const missionWidth = timesRoman.widthOfTextAtSize(vault.mission_name, missionSize);
       titlePage.drawText(vault.mission_name, {
         x: (pageWidth - missionWidth) / 2,
-        y: pageHeight / 2 + 20,
-        size: missionFontSize,
+        y: pageHeight / 2 + 20 * scaleFactor,
+        size: missionSize,
         font: timesRoman,
         color: interiorText,
       });
@@ -180,23 +231,22 @@ serve(async (req) => {
         return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       };
       const datesText = `${formatDate(vault.service_start_date)} — ${formatDate(vault.service_end_date)}`;
-      const datesFontSize = 14;
-      const datesWidth = timesRoman.widthOfTextAtSize(datesText, datesFontSize);
+      const datesWidth = timesRoman.widthOfTextAtSize(datesText, datesSize);
       titlePage.drawText(datesText, {
         x: (pageWidth - datesWidth) / 2,
-        y: pageHeight / 2 - 20,
-        size: datesFontSize,
+        y: pageHeight / 2 - 20 * scaleFactor,
+        size: datesSize,
         font: timesRoman,
         color: interiorText,
       });
     }
 
-    // Add content pages
+    // Add content pages (only approved pages)
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
       const contentPage = pdfDoc.addPage([pageWidth, pageHeight]);
       
-      // Draw background
+      // Draw interior background
       contentPage.drawRectangle({
         x: 0,
         y: 0,
@@ -207,17 +257,17 @@ serve(async (req) => {
       
       let yPosition = pageHeight - margin;
 
-      // Title - centered, no page numbers
+      // Title - centered
       if (page.title) {
-        const titleWidth = timesRomanBold.widthOfTextAtSize(page.title, 24);
+        const pageTitleWidth = timesRomanBold.widthOfTextAtSize(page.title, contentTitleSize);
         contentPage.drawText(page.title, {
-          x: (pageWidth - titleWidth) / 2,
+          x: (pageWidth - pageTitleWidth) / 2,
           y: yPosition,
-          size: 24,
+          size: contentTitleSize,
           font: timesRomanBold,
           color: interiorText,
         });
-        yPosition -= 40;
+        yPosition -= 40 * scaleFactor;
       }
 
       // Embed images (support multiple images)
@@ -230,8 +280,8 @@ serve(async (req) => {
       if (imageUrls.length > 0) {
         // Calculate layout based on number of images
         const maxTotalWidth = pageWidth - (margin * 2);
-        const maxHeightPerImage = imageUrls.length === 1 ? 300 : 200;
-        const gapBetweenImages = 10;
+        const maxHeightPerImage = (imageUrls.length === 1 ? 300 : 200) * scaleFactor;
+        const gapBetweenImages = 10 * scaleFactor;
         
         // For multiple images, arrange them side by side
         let currentX = margin;
@@ -278,26 +328,25 @@ serve(async (req) => {
           }
         }
         
-        yPosition -= maxImageHeight + 20;
+        yPosition -= maxImageHeight + 20 * scaleFactor;
       }
 
-      // Content text with word wrapping - using serif font for body
+      // Content text with word wrapping
       if (page.content) {
         const words = page.content.split(' ');
         let currentLine = '';
         const maxLineWidth = pageWidth - (margin * 2);
-        const lineHeight = 20;
-        const fontSize = 14;
+        const lineHeight = 20 * scaleFactor;
 
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
-          const testWidth = timesRoman.widthOfTextAtSize(testLine, fontSize);
+          const testWidth = timesRoman.widthOfTextAtSize(testLine, contentBodySize);
           
           if (testWidth > maxLineWidth && currentLine) {
             contentPage.drawText(currentLine, {
               x: margin,
               y: yPosition,
-              size: fontSize,
+              size: contentBodySize,
               font: timesRoman,
               color: interiorText,
             });
@@ -318,7 +367,7 @@ serve(async (req) => {
           contentPage.drawText(currentLine, {
             x: margin,
             y: yPosition,
-            size: fontSize,
+            size: contentBodySize,
             font: timesRoman,
             color: interiorText,
           });
@@ -326,7 +375,7 @@ serve(async (req) => {
       }
     }
 
-    // Add closing message page
+    // Add closing message page with interior colors
     const closingPage = pdfDoc.addPage([pageWidth, pageHeight]);
     closingPage.drawRectangle({
       x: 0,
@@ -337,26 +386,25 @@ serve(async (req) => {
     });
     
     const closingMessage = 'The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever.';
-    const closingFontSize = 16;
     const closingMaxWidth = pageWidth - (margin * 2);
     const closingWords = closingMessage.split(' ');
     let closingLine = '';
-    let closingY = pageHeight / 2 + 20;
+    let closingY = pageHeight / 2 + 20 * scaleFactor;
     
     for (const word of closingWords) {
       const testLine = closingLine ? `${closingLine} ${word}` : word;
-      const testWidth = timesRoman.widthOfTextAtSize(testLine, closingFontSize);
+      const testWidth = timesRoman.widthOfTextAtSize(testLine, closingSize);
       
       if (testWidth > closingMaxWidth && closingLine) {
-        const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingFontSize);
+        const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingSize);
         closingPage.drawText(closingLine, {
           x: (pageWidth - lineWidth) / 2,
           y: closingY,
-          size: closingFontSize,
+          size: closingSize,
           font: timesRoman,
           color: interiorText,
         });
-        closingY -= 24;
+        closingY -= 24 * scaleFactor;
         closingLine = word;
       } else {
         closingLine = testLine;
@@ -364,17 +412,17 @@ serve(async (req) => {
     }
     
     if (closingLine) {
-      const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingFontSize);
+      const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingSize);
       closingPage.drawText(closingLine, {
         x: (pageWidth - lineWidth) / 2,
         y: closingY,
-        size: closingFontSize,
+        size: closingSize,
         font: timesRoman,
         color: interiorText,
       });
     }
 
-    // Add back cover (blank - just the cover color)
+    // Add back cover (blank - just the cover color, no text or branding)
     const backCover = pdfDoc.addPage([pageWidth, pageHeight]);
     backCover.drawRectangle({
       x: 0,

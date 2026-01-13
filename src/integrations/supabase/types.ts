@@ -241,6 +241,7 @@ export type Database = {
       }
       vaults: {
         Row: {
+          book_size: string
           contributor_page_limit: number
           cover_image_url: string | null
           created_at: string
@@ -258,6 +259,7 @@ export type Database = {
           vault_type: string
         }
         Insert: {
+          book_size?: string
           contributor_page_limit?: number
           cover_image_url?: string | null
           created_at?: string
@@ -275,6 +277,7 @@ export type Database = {
           vault_type?: string
         }
         Update: {
+          book_size?: string
           contributor_page_limit?: number
           cover_image_url?: string | null
           created_at?: string
