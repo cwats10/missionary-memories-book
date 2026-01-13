@@ -35,12 +35,12 @@ const getCoverColors = (vaultType: VaultType) => {
     case 'homecoming':
       return {
         bg: brandConfig.colors.deepForest.hex,
-        text: '#F4F1EC',
+        text: brandConfig.colors.boneParchment.hex,
       };
     case 'returned':
       return {
         bg: brandConfig.colors.deepCharcoal.hex,
-        text: '#F4F1EC',
+        text: brandConfig.colors.boneParchment.hex,
       };
   }
 };
@@ -120,7 +120,7 @@ export function BookPreview({
                 className="font-serif text-xl md:text-2xl"
                 style={{ color: coverColors.text }}
               >
-                Mission Memory Vault
+                {brandConfig.name}
               </h2>
             </div>
           </div>

@@ -12,7 +12,7 @@ const Hero = () => {
 
       {/* Headline - feels like a title, not marketing copy */}
       <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-center max-w-4xl leading-tight tracking-tight mb-8">
-        Preserve the voices, moments, and messages that shape a life-changing journey
+        {brandConfig.tagline}
       </h1>
 
       {/* Supporting explanation - short, grounded */}
