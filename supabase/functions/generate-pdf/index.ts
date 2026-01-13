@@ -441,7 +441,7 @@ serve(async (req) => {
       color: interiorBg,
     });
     
-    const closingMessage = 'The voices, moments, and messages that shape a life‑changing journey have been recorded and will now last forever';
+    const closingMessage = 'The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever';
     const closingMaxWidth = pageWidth - (margin * 2);
     const closingWords = closingMessage.split(' ');
     let closingLine = '';
