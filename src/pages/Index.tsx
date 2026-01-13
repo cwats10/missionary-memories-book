@@ -1,6 +1,9 @@
 import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Products from "@/components/landing/Products";
+import Craftsmanship from "@/components/landing/Craftsmanship";
+import Testimonials from "@/components/landing/Testimonials";
+import TrustIndicators from "@/components/landing/TrustIndicators";
 import Pricing from "@/components/landing/Pricing";
 import Footer from "@/components/landing/Footer";
 
@@ -10,13 +13,13 @@ const Index = () => {
       {/* 
         Mission Memory Vault™ Landing Page
         
-        Design Philosophy:
-        - Calm, unrushed, respectful
-        - Like entering a quiet, well-lit archive
-        - Headlines feel like titles, not marketing copy
-        - CTAs are invitations, not commands
-        - Generous bone/parchment space
-        - Motion nearly invisible
+        Design Philosophy (High Quality Website Framework):
+        - Visual Authority: Clean, generous spacing, controlled palette
+        - Emotional Storytelling: Connect to memory, identity, legacy
+        - Craftsmanship: Explain materials, durability, quality
+        - Trust Signals: Testimonials, guarantees, security
+        - Value Framing: Explain why it's worth the price
+        - Calm, confident language without hype or pressure
       */}
       
       <Hero />
@@ -28,7 +31,13 @@ const Index = () => {
       
       <Products />
       
+      <Craftsmanship />
+      
+      <Testimonials />
+      
       <div className="max-w-xs mx-auto h-px bg-gold/30" />
+      
+      <TrustIndicators />
       
       <Pricing />
       
