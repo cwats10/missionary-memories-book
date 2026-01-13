@@ -51,6 +51,7 @@ const VaultDetail = () => {
 
   const [editingPage, setEditingPage] = useState<Page | null>(null);
   const [pageFilter, setPageFilter] = useState<PageFilter>('all');
+  const [optimizingImages, setOptimizingImages] = useState(false);
 
   const isOwner = userRole === 'owner';
   const isManager = userRole === 'coowner';
