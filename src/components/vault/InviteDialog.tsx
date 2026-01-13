@@ -49,7 +49,7 @@ export function InviteDialog({ vaultId, vaultTitle }: InviteDialogProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Users className="h-4 w-4" />
-          Invite
+          Invite Contributor
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
