@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { brandConfig } from "@/config/brandConfig";
-import farewellCoverBg from "@/assets/farewell-cover-bg.png";
-import homecomingCoverBg from "@/assets/homecoming-cover-bg.png";
-import returnedCoverBg from "@/assets/returned-cover-bg.png";
+const farewellCoverBg = "/covers/farewell-cover-bg.png";
+const homecomingCoverBg = "/covers/homecoming-cover-bg.png";
+const returnedCoverBg = "/covers/returned-cover-bg.png";
 
 interface BookPreviewProps {
   recipientName: string;

@@ -203,7 +203,10 @@ serve(async (req) => {
 
       try {
         const res = await fetch(bgUrl);
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.error('Cover texture fetch failed:', bgUrl, res.status);
+          return;
+        }
         const bytes = await res.arrayBuffer();
         const img = await pdfDoc.embedPng(bytes);
 
