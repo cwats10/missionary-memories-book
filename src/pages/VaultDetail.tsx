@@ -194,13 +194,15 @@ const VaultDetail = () => {
                 vaultType={vault.vault_type}
               />
               {isOwner && <DownloadPdfButton vaultId={vault.id} disabled={pages.length === 0} purchased={vault.status === 'purchased'} />}
-              {isOwner && (
+{isOwner && (
                 <CheckoutDialog 
                   vaultTitle="Mission Memory Vault" 
                   pageCount={pages.length} 
                   onOrderComplete={async () => {
-                    await updateVault({ status: 'purchased' });
-                    refetchVault();
+                    const result = await updateVault({ status: 'purchased' });
+                    if (!result.error) {
+                      await refetchVault();
+                    }
                   }}
                 />
               )}
