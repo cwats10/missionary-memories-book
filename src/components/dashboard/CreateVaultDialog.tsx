@@ -32,13 +32,13 @@ const vaultTypes: { type: VaultType; name: string; color: string; textColor: str
     type: 'homecoming',
     name: 'Homecoming Vault',
     color: brandConfig.colors.deepForest.hex,
-    textColor: '#F4F1EC',
+    textColor: brandConfig.colors.boneParchment.hex,
   },
   {
     type: 'returned',
     name: 'Returned Missionary Vault',
     color: brandConfig.colors.deepCharcoal.hex,
-    textColor: '#F4F1EC',
+    textColor: brandConfig.colors.boneParchment.hex,
   },
 ];
 
