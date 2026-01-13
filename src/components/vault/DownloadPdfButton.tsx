@@ -12,13 +12,24 @@ interface DownloadPdfButtonProps {
   vaultId: string;
   disabled?: boolean;
   purchased?: boolean;
+  /** Optional tooltip message when the button is disabled for reasons other than purchase */
+  disabledReason?: string;
 }
 
-export function DownloadPdfButton({ vaultId, disabled, purchased = false }: DownloadPdfButtonProps) {
+export function DownloadPdfButton({
+  vaultId,
+  disabled,
+  purchased = false,
+  disabledReason,
+}: DownloadPdfButtonProps) {
   const { generatePdf, generating } = usePdfGeneration();
 
   const isDisabledDueToNoPurchase = !purchased;
   const isFullyDisabled = generating || disabled || isDisabledDueToNoPurchase;
+
+  const tooltipMessage = isDisabledDueToNoPurchase
+    ? 'Download is available after the vault is purchased'
+    : disabledReason;
 
   const button = (
     <Button
@@ -42,8 +53,9 @@ export function DownloadPdfButton({ vaultId, disabled, purchased = false }: Down
     </Button>
   );
 
-  // Show tooltip only when disabled due to no purchase
-  if (isDisabledDueToNoPurchase && !generating) {
+  // When disabled, wrap with tooltip so users understand why.
+  // (Radix Tooltip doesn't work on disabled buttons directly.)
+  if (isFullyDisabled && !generating && tooltipMessage) {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -53,7 +65,7 @@ export function DownloadPdfButton({ vaultId, disabled, purchased = false }: Down
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Download is available after the vault is purchased</p>
+            <p>{tooltipMessage}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
