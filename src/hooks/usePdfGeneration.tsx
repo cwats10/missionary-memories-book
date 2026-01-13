@@ -15,39 +15,8 @@ export function usePdfGeneration() {
         return null;
       }
 
-      // Load the exact cover background PNG used by the preview so the PDF matches.
-      let coverBgPngBase64: string | null = null;
-      try {
-        const { data: vault } = await supabase
-          .from('vaults')
-          .select('vault_type')
-          .eq('id', vaultId)
-          .single();
-
-        const type = String(vault?.vault_type ?? '').toLowerCase();
-        const coverPath = type.includes('homecoming')
-          ? '/covers/homecoming-cover-bg.png'
-          : type.includes('returned')
-            ? '/covers/returned-cover-bg.png'
-            : '/covers/farewell-cover-bg.png';
-
-        const res = await fetch(coverPath);
-        if (res.ok) {
-          const blob = await res.blob();
-          const dataUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ''));
-            reader.onerror = () => reject(new Error('Failed to read cover image'));
-            reader.readAsDataURL(blob);
-          });
-          coverBgPngBase64 = dataUrl.split(',')[1] || null;
-        }
-      } catch {
-        // If this fails, we still generate a PDF with a solid cover color.
-      }
-
       const response = await supabase.functions.invoke('generate-pdf', {
-        body: { vaultId, coverBgPngBase64 },
+        body: { vaultId },
       });
 
       if (response.error) {
