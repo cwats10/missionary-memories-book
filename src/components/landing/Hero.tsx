@@ -53,10 +53,10 @@ const Hero = () => {
             {brandConfig.copy.cta.primary}
           </a>
           <a 
-            href="#how-it-works" 
+            href="/auth" 
             className="inline-flex items-center justify-center px-8 py-4 border border-primary text-foreground font-medium text-lg rounded transition-all duration-300 hover:bg-primary/5"
           >
-            {brandConfig.copy.cta.secondary}
+            Sign In To Your Vault
           </a>
         </div>
       </div>
