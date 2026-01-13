@@ -118,6 +118,26 @@ serve(async (req) => {
       });
     }
 
+    // Authorization check: verify user is owner or contributor
+    const isOwner = vault.owner_id === user.id;
+    
+    if (!isOwner) {
+      // Check if user is a contributor
+      const { data: contributor } = await supabase
+        .from('vault_contributors')
+        .select('id')
+        .eq('vault_id', vaultId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (!contributor) {
+        return new Response(JSON.stringify({ error: 'You do not have access to this vault' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Fetch approved pages only
     const { data: pages, error: pagesError } = await supabase
       .from('pages')
