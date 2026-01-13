@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
 export type VaultType = 'farewell' | 'homecoming' | 'returned';
+export type BookSize = '9x9' | '12x12' | 'a4' | 'a5';
 
 export interface Vault {
   id: string;
@@ -18,6 +19,7 @@ export interface Vault {
   status: string;
   cover_image_url: string | null;
   vault_type: VaultType;
+  book_size: BookSize;
   contributor_page_limit: number;
   created_at: string;
   updated_at: string;
@@ -38,6 +40,7 @@ export interface CreateVaultInput {
   description?: string;
   occasion?: string;
   vault_type: VaultType;
+  book_size?: BookSize;
   contributor_page_limit?: number;
 }
 
@@ -97,6 +100,7 @@ export function useVaults() {
         contributedVaults = (contribVaults || []).map((v) => ({
           ...v,
           vault_type: v.vault_type as VaultType,
+          book_size: v.book_size as BookSize,
         }));
       }
     }
@@ -107,6 +111,7 @@ export function useVaults() {
     const ownedWithRole: VaultWithRole[] = (ownedVaults || []).map((v) => ({
       ...v,
       vault_type: v.vault_type as VaultType,
+      book_size: v.book_size as BookSize,
       userRole: 'owner' as VaultRole,
     }));
 
@@ -145,6 +150,7 @@ export function useVaults() {
         description: input.description || null,
         occasion: input.occasion || null,
         vault_type: input.vault_type,
+        book_size: input.book_size || '9x9',
         contributor_page_limit: input.contributor_page_limit || 1,
       })
       .select()

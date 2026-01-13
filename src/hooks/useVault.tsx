@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Vault, VaultType } from './useVaults';
+import { Vault, VaultType, BookSize } from './useVaults';
 import { toast } from 'sonner';
 import { useAuth } from './useAuth';
 
@@ -32,6 +32,7 @@ export function useVault(vaultId: string | undefined) {
       setVault({
         ...data,
         vault_type: data.vault_type as VaultType,
+        book_size: data.book_size as BookSize,
       });
 
       // Determine user's role
