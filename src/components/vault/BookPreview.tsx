@@ -13,6 +13,7 @@ import {
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { brandConfig } from "@/config/brandConfig";
 import farewellCoverBg from "@/assets/farewell-cover-bg.png";
+import homecomingCoverBg from "@/assets/homecoming-cover-bg.png";
 
 interface BookPreviewProps {
   recipientName: string;
@@ -108,7 +109,8 @@ export function BookPreview({
             className="w-1/2 flex flex-col items-center justify-center px-12 relative bg-cover bg-center"
             style={{ 
               backgroundColor: coverColors.bg,
-              ...(vaultType === 'farewell' && { backgroundImage: `url(${farewellCoverBg})` })
+              ...(vaultType === 'farewell' && { backgroundImage: `url(${farewellCoverBg})` }),
+              ...(vaultType === 'homecoming' && { backgroundImage: `url(${homecomingCoverBg})` })
             }}
           >
             <div className="text-center relative z-10">
@@ -159,7 +161,8 @@ export function BookPreview({
             className="w-1/2 bg-cover bg-center"
             style={{ 
               backgroundColor: coverColors.bg,
-              ...(vaultType === 'farewell' && { backgroundImage: `url(${farewellCoverBg})` })
+              ...(vaultType === 'farewell' && { backgroundImage: `url(${farewellCoverBg})` }),
+              ...(vaultType === 'homecoming' && { backgroundImage: `url(${homecomingCoverBg})` })
             }}
           />
         </div>
