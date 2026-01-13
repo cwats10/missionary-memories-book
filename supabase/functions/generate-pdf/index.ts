@@ -172,6 +172,54 @@ serve(async (req) => {
     const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
     const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
 
+    // Try to match the web preview cover textures by loading static assets from the site origin.
+    const requestOrigin = req.headers.get('origin') ?? '';
+    const getCoverBgUrl = (vaultType: string) => {
+      if (!requestOrigin) return null;
+      switch (vaultType) {
+        case 'farewell':
+          return `${requestOrigin}/covers/farewell-cover-bg.png`;
+        case 'homecoming':
+          return `${requestOrigin}/covers/homecoming-cover-bg.png`;
+        case 'returned':
+          return `${requestOrigin}/covers/returned-cover-bg.png`;
+        default:
+          return null;
+      }
+    };
+
+    const drawCoverBackground = async (page: any) => {
+      // Base color first
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
+        color: coverColors.bg,
+      });
+
+      const bgUrl = getCoverBgUrl(vault.vault_type || 'farewell');
+      if (!bgUrl) return;
+
+      try {
+        const res = await fetch(bgUrl);
+        if (!res.ok) return;
+        const bytes = await res.arrayBuffer();
+        const img = await pdfDoc.embedPng(bytes);
+
+        // "cover" fit (like CSS background-size: cover)
+        const scale = Math.max(pageWidth / img.width, pageHeight / img.height);
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        const x = (pageWidth - drawW) / 2;
+        const y = (pageHeight - drawH) / 2;
+
+        page.drawImage(img, { x, y, width: drawW, height: drawH });
+      } catch (_e) {
+        // If this fails for any reason, fall back to solid color.
+      }
+    };
+
     // Calculate font sizes relative to page size (scale based on 9x9 base)
     const scaleFactor = Math.min(pageWidth, pageHeight) / 648; // 648 = 9 inches * 72
     const coverTitleSize = Math.round(36 * scaleFactor);
@@ -185,14 +233,8 @@ serve(async (req) => {
     // Create cover page
     const coverPage = pdfDoc.addPage([pageWidth, pageHeight]);
     
-    // Draw cover background
-    coverPage.drawRectangle({
-      x: 0,
-      y: 0,
-      width: pageWidth,
-      height: pageHeight,
-      color: coverColors.bg,
-    });
+    // Draw cover background (solid + optional texture)
+    await drawCoverBackground(coverPage);
 
     // Cover title - just "Mission Memory Vault" centered
     const titleText = 'Mission Memory Vault';
@@ -399,7 +441,7 @@ serve(async (req) => {
       color: interiorBg,
     });
     
-    const closingMessage = 'The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever.';
+    const closingMessage = 'The voices, moments, and messages that shape a life‑changing journey have been recorded and will now last forever';
     const closingMaxWidth = pageWidth - (margin * 2);
     const closingWords = closingMessage.split(' ');
     let closingLine = '';
@@ -436,26 +478,22 @@ serve(async (req) => {
       });
     }
 
-    // Add back cover (blank - just the cover color, no text or branding)
+    // Add back cover (blank - just the cover color/texture, no text or branding)
     const backCover = pdfDoc.addPage([pageWidth, pageHeight]);
-    backCover.drawRectangle({
-      x: 0,
-      y: 0,
-      width: pageWidth,
-      height: pageHeight,
-      color: coverColors.bg,
-    });
+    await drawCoverBackground(backCover);
 
-    // Prodigi requires even page count - add blank page if needed
+    // Keep the very last page as the back cover (no trailing blank page).
+    // If we need to pad to an even page count, insert a blank page *before* the back cover.
     const totalPages = pdfDoc.getPageCount();
     if (totalPages % 2 !== 0) {
-      const blankPage = pdfDoc.addPage([pageWidth, pageHeight]);
-      blankPage.drawRectangle({
+      const backCoverIndex = pdfDoc.getPageCount() - 1;
+      const paddingPage = pdfDoc.insertPage(backCoverIndex, [pageWidth, pageHeight]);
+      paddingPage.drawRectangle({
         x: 0,
         y: 0,
         width: pageWidth,
         height: pageHeight,
-        color: interiorBg, // Use interior color for blank padding page
+        color: interiorBg,
       });
     }
 
