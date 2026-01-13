@@ -47,8 +47,9 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
     setProcessing(false);
+    // Update vault status before showing completion
+    await onOrderComplete?.(orderType);
     setStep('complete');
-    onOrderComplete?.(orderType);
   };
 
   const handleClose = () => {
