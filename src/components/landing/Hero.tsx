@@ -56,7 +56,7 @@ const Hero = () => {
             href="/auth" 
             className="inline-flex items-center justify-center px-8 py-4 border border-primary text-foreground font-medium text-lg rounded transition-all duration-300 hover:bg-primary/5"
           >
-            Sign In To Your Vault
+            Access Your Vault
           </a>
         </div>
       </div>

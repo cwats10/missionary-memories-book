@@ -14,6 +14,7 @@ import { BookPreview } from '@/components/vault/BookPreview';
 import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
 import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
 import { TitlePageCard } from '@/components/vault/TitlePageCard';
+import { ThankYouDialog } from '@/components/vault/ThankYouDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,7 @@ const VaultDetail = () => {
   const [editingPage, setEditingPage] = useState<Page | null>(null);
   const [pageFilter, setPageFilter] = useState<PageFilter>('all');
   const [optimizingImages, setOptimizingImages] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
 
   const isOwner = userRole === 'owner';
   const isManager = userRole === 'coowner';
@@ -220,6 +222,17 @@ const VaultDetail = () => {
     const result = await updatePage(pageId, updates);
     if (!result.error) {
       setEditingPage(null);
+    }
+    return result;
+  };
+
+  const handleSubmitPage = async (pageId: string) => {
+    const result = await submitPage(pageId);
+    if (!result.error) {
+      // Show thank you dialog for contributors after successful submission
+      if (isContributor) {
+        setShowThankYou(true);
+      }
     }
     return result;
   };
@@ -449,7 +462,7 @@ const VaultDetail = () => {
                 onApprove={approvePage}
                 onReject={rejectPage}
                 onUnapprove={unapprove}
-                onSubmit={submitPage}
+                onSubmit={handleSubmitPage}
                 isOwner={canManage}
               />
             </>
@@ -464,6 +477,13 @@ const VaultDetail = () => {
         open={!!editingPage}
         onOpenChange={(open) => !open && setEditingPage(null)}
         onSave={handleSavePage}
+      />
+
+      {/* Thank You Dialog for Contributors */}
+      <ThankYouDialog
+        open={showThankYou}
+        onOpenChange={setShowThankYou}
+        recipientName={vault.recipient_name}
       />
     </div>
   );
