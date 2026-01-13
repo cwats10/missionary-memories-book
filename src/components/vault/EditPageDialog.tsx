@@ -14,19 +14,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Image, X, Upload } from 'lucide-react';
 import { Page } from '@/hooks/usePages';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { BookSize } from '@/hooks/useVaults';
+import { MAX_IMAGES, getCharacterLimits, getBookSizeLabel } from '@/lib/bookSizeLimits';
 
 interface EditPageDialogProps {
   page: Page | null;
+  bookSize: BookSize;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (pageId: string, updates: Partial<Page>) => Promise<{ error?: Error | null }>;
 }
 
-const MAX_IMAGES = 3;
-const MAX_CHARACTERS_NO_IMAGES = 1700;
-const MAX_CHARACTERS_WITH_IMAGES = 750;
-
-export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDialogProps) {
+export function EditPageDialog({ page, bookSize, open, onOpenChange, onSave }: EditPageDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -37,6 +36,8 @@ export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDia
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadImage, uploading } = useImageUpload();
+
+  const characterLimits = getCharacterLimits(bookSize);
 
   // Populate form when page changes
   useEffect(() => {
@@ -60,7 +61,7 @@ export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDia
   const totalImages = existingImages.length + newImageFiles.length;
   const canAddMore = totalImages < MAX_IMAGES;
   const hasImages = totalImages > 0;
-  const maxCharacters = hasImages ? MAX_CHARACTERS_WITH_IMAGES : MAX_CHARACTERS_NO_IMAGES;
+  const maxCharacters = hasImages ? characterLimits.withImages : characterLimits.noImages;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -242,8 +243,8 @@ export function EditPageDialog({ page, open, onOpenChange, onSave }: EditPageDia
               />
               <p className="text-xs text-muted-foreground">
                 {hasImages 
-                  ? `Character limit reduced to ${MAX_CHARACTERS_WITH_IMAGES} when images are added.`
-                  : `You have a ${MAX_CHARACTERS_NO_IMAGES} character limit, but adding images reduces it to ${MAX_CHARACTERS_WITH_IMAGES}.`
+                  ? `Character limit is ${characterLimits.withImages.toLocaleString()} for ${getBookSizeLabel(bookSize)} books with images.`
+                  : `You have ${characterLimits.noImages.toLocaleString()} characters for ${getBookSizeLabel(bookSize)} books, reduced to ${characterLimits.withImages.toLocaleString()} with images.`
                 }
               </p>
             </div>

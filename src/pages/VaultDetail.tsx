@@ -275,7 +275,7 @@ const VaultDetail = () => {
                 </div>
               )}
               {canCreateMorePages ? (
-                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} />
+                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} bookSize={vault.book_size} onCreatePage={createPage} />
               ) : (
                 <div className="text-sm text-muted-foreground">
                   You've created {userPageCount}/{contributorPageLimit} pages
@@ -315,7 +315,7 @@ const VaultDetail = () => {
                   : `Add your special memory for ${vault.recipient_name}. Click the button to get started!`}
               </p>
               {(canManage ? pageFilter === 'all' : true) && canCreateMorePages && (
-                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} />
+                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} bookSize={vault.book_size} onCreatePage={createPage} />
               )}
               {(canManage ? pageFilter === 'all' : true) && !canCreateMorePages && (
                 <p className="text-sm text-muted-foreground">
@@ -347,6 +347,7 @@ const VaultDetail = () => {
       {/* Edit Page Dialog */}
       <EditPageDialog
         page={editingPage}
+        bookSize={vault.book_size}
         open={!!editingPage}
         onOpenChange={(open) => !open && setEditingPage(null)}
         onSave={handleSavePage}

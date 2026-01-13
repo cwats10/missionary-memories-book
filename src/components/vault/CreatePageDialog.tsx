@@ -15,11 +15,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Image, X, Upload } from 'lucide-react';
 import { CreatePageInput } from '@/hooks/usePages';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { BookSize } from '@/hooks/useVaults';
+import { MAX_IMAGES, getCharacterLimits, getBookSizeLabel } from '@/lib/bookSizeLimits';
 
 interface CreatePageDialogProps {
   vaultId: string;
   vaultType: string;
   recipientName: string;
+  bookSize: BookSize;
   onCreatePage: (input: CreatePageInput) => Promise<{ error?: Error | null }>;
 }
 
@@ -36,11 +39,7 @@ const getDialogDescription = (vaultType: string, recipientName: string): string 
   }
 };
 
-const MAX_IMAGES = 3;
-const MAX_CHARACTERS_NO_IMAGES = 1700;
-const MAX_CHARACTERS_WITH_IMAGES = 750;
-
-export function CreatePageDialog({ vaultId, vaultType, recipientName, onCreatePage }: CreatePageDialogProps) {
+export function CreatePageDialog({ vaultId, vaultType, recipientName, bookSize, onCreatePage }: CreatePageDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,6 +50,8 @@ export function CreatePageDialog({ vaultId, vaultType, recipientName, onCreatePa
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadImage, uploading } = useImageUpload();
+
+  const characterLimits = getCharacterLimits(bookSize);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -117,7 +118,7 @@ export function CreatePageDialog({ vaultId, vaultType, recipientName, onCreatePa
 
   const canAddMore = imageFiles.length < MAX_IMAGES;
   const hasImages = imageFiles.length > 0;
-  const maxCharacters = hasImages ? MAX_CHARACTERS_WITH_IMAGES : MAX_CHARACTERS_NO_IMAGES;
+  const maxCharacters = hasImages ? characterLimits.withImages : characterLimits.noImages;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -217,8 +218,8 @@ export function CreatePageDialog({ vaultId, vaultType, recipientName, onCreatePa
               />
               <p className="text-xs text-muted-foreground">
                 {hasImages 
-                  ? `Character limit reduced to ${MAX_CHARACTERS_WITH_IMAGES} when images are added.`
-                  : `You have a ${MAX_CHARACTERS_NO_IMAGES} character limit, but adding images reduces it to ${MAX_CHARACTERS_WITH_IMAGES}.`
+                  ? `Character limit is ${characterLimits.withImages.toLocaleString()} for ${getBookSizeLabel(bookSize)} books with images.`
+                  : `You have ${characterLimits.noImages.toLocaleString()} characters for ${getBookSizeLabel(bookSize)} books, reduced to ${characterLimits.withImages.toLocaleString()} with images.`
                 }
               </p>
             </div>
