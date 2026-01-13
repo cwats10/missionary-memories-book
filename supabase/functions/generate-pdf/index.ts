@@ -94,7 +94,7 @@ serve(async (req) => {
       });
     }
 
-    const { vaultId, coverBgPngBase64 } = await req.json();
+    const { vaultId } = await req.json();
     if (!vaultId) {
       return new Response(JSON.stringify({ error: 'Vault ID required' }), {
         status: 400,
@@ -172,14 +172,15 @@ serve(async (req) => {
     const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
     const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
 
-    // Cover background image: we pass the exact PNG bytes from the client so the
-    // downloaded PDF always matches the in-app preview (no flaky network fetches).
-    const decodeBase64Png = (value: string) => {
-      const b64 = value.includes(',') ? (value.split(',').pop() || '') : value;
-      const binary = atob(b64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return bytes;
+    // Cover background images are fetched from Supabase Storage (cover-images bucket).
+    // This avoids sending large base64 payloads from the client.
+    const getCoverStorageUrl = (vaultType: string) => {
+      const fileName = vaultType === 'homecoming'
+        ? 'homecoming-cover-bg.png'
+        : vaultType === 'returned'
+          ? 'returned-cover-bg.png'
+          : 'farewell-cover-bg.png';
+      return `${supabaseUrl}/storage/v1/object/public/cover-images/${fileName}`;
     };
 
     const drawCoverBackground = async (page: any) => {
@@ -192,10 +193,16 @@ serve(async (req) => {
         color: coverColors.bg,
       });
 
-      if (!coverBgPngBase64) return;
+      const url = getCoverStorageUrl(vault.vault_type || 'farewell');
 
       try {
-        const img = await pdfDoc.embedPng(decodeBase64Png(coverBgPngBase64));
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.error('Cover fetch failed:', url, res.status);
+          return;
+        }
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        const img = await pdfDoc.embedPng(bytes);
 
         // "cover" fit (like CSS background-size: cover)
         const scale = Math.max(pageWidth / img.width, pageHeight / img.height);
