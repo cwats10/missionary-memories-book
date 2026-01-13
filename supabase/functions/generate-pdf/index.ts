@@ -374,7 +374,7 @@ serve(async (req) => {
       });
     }
 
-    // Add back cover
+    // Add back cover (blank - just the cover color)
     const backCover = pdfDoc.addPage([pageWidth, pageHeight]);
     backCover.drawRectangle({
       x: 0,
@@ -382,16 +382,6 @@ serve(async (req) => {
       width: pageWidth,
       height: pageHeight,
       color: coverColors.bg,
-    });
-
-    const madeWithText = 'Made with Mission Memory Vault™';
-    const madeWithWidth = timesRoman.widthOfTextAtSize(madeWithText, 12);
-    backCover.drawText(madeWithText, {
-      x: (pageWidth - madeWithWidth) / 2,
-      y: margin,
-      size: 12,
-      font: timesRoman,
-      color: coverColors.text,
     });
 
     // Serialize PDF
