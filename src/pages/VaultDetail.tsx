@@ -193,20 +193,18 @@ const VaultDetail = () => {
                 pages={pages}
                 vaultType={vault.vault_type}
               />
-              {isOwner && (
-                <DownloadPdfButton
-                  vaultId={vault.id}
-                  disabled={pages.length === 0 || approvedCount === 0}
-                  disabledReason={
-                    pages.length === 0
-                      ? 'Add at least one page to enable PDF download'
-                      : approvedCount === 0
-                        ? 'Approve at least one page to enable PDF download'
-                        : undefined
-                  }
-                  purchased={vault.status === 'purchased'}
-                />
-              )}
+              <DownloadPdfButton
+                vaultId={vault.id}
+                disabled={pages.length === 0 || approvedCount === 0}
+                disabledReason={
+                  pages.length === 0
+                    ? 'Add at least one page to enable PDF download'
+                    : approvedCount === 0
+                      ? 'Approve at least one page to enable PDF download'
+                      : undefined
+                }
+                purchased={vault.status === 'purchased'}
+              />
               {isOwner && (
                 <CheckoutDialog 
                   vaultTitle="Mission Memory Vault" 
