@@ -57,7 +57,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     vault_type: 'farewell' as VaultType,
-    book_size: '9x9' as BookSize,
+    book_size: null as BookSize | null,
     recipient_name: '',
     mission_name: '',
     service_start_date: '',
@@ -73,7 +73,12 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
 
   const handleSizeSelect = (size: BookSize) => {
     setFormData({ ...formData, book_size: size });
-    setStep('details');
+  };
+
+  const handleSizeNext = () => {
+    if (formData.book_size) {
+      setStep('details');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,7 +93,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
       service_end_date: formData.service_end_date || undefined,
       description: formData.description || undefined,
       vault_type: formData.vault_type,
-      book_size: formData.book_size,
+      book_size: formData.book_size!,
       contributor_page_limit: formData.contributor_page_limit,
     });
 
@@ -99,7 +104,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
       setStep('type');
       setFormData({
         vault_type: 'farewell',
-        book_size: '9x9',
+        book_size: null,
         recipient_name: '',
         mission_name: '',
         service_start_date: '',
@@ -238,6 +243,13 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setStep('type')}>
                 Back
+              </Button>
+              <Button 
+                type="button" 
+                onClick={handleSizeNext}
+                disabled={!formData.book_size}
+              >
+                Next
               </Button>
             </DialogFooter>
           </>
