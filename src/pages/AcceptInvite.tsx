@@ -44,20 +44,24 @@ const AcceptInvite = () => {
     if (!user || !code) return;
 
     setAccepting(true);
-    const { error } = await acceptInvite(code, user.id);
+    const { data, error } = await acceptInvite(code, user.id);
     
     if (error) {
-      // If already a contributor/manager, redirect to dashboard
-      if (error.message?.includes('already a contributor')) {
-        toast.info('You already have access to this vault');
-        navigate('/dashboard');
-        return;
-      }
       toast.error(error.message);
       setAccepting(false);
-    } else {
+      return;
+    }
+
+    if (data) {
+      // Update invite state with the returned data for success display
+      setInvite((prev: any) => ({
+        ...prev,
+        vault_id: data.vault_id,
+        role: data.role,
+        vaults: data.vaults || prev?.vaults
+      }));
       setSuccess(true);
-      const roleLabel = invite?.role === 'coowner' ? 'manager' : 'contributor';
+      const roleLabel = data.role === 'coowner' ? 'manager' : 'contributor';
       toast.success(`You are now a ${roleLabel}!`);
     }
   };
