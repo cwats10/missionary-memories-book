@@ -15,6 +15,7 @@ import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
 import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
 import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { ThankYouDialog } from '@/components/vault/ThankYouDialog';
+import { ManagersList } from '@/components/vault/ManagersList';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -359,6 +360,9 @@ const VaultDetail = () => {
               </div>
             </div>
           )}
+
+          {/* Managers List - Owner only */}
+          {isOwner && <ManagersList vaultId={vault.id} />}
 
           {/* Title Page Section - Owner and Manager */}
           {canManage && (
