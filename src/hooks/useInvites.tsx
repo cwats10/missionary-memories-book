@@ -117,45 +117,43 @@ export async function getInviteByCode(code: string) {
 }
 
 export async function acceptInvite(code: string, userId: string) {
-  // Get the invite
-  const { data: invite, error: fetchError } = await getInviteByCode(code);
+  // Call the secure server-side function
+  // Using type assertion since the function was just added
+  const { data, error } = await (supabase.rpc as any)('accept_invite', { _code: code });
+
+  if (error) {
+    console.error('Error accepting invite:', error);
+    
+    // Map error messages to user-friendly messages
+    if (error.message?.includes('not_authenticated')) {
+      return { error: new Error('Please sign in to accept this invite') };
+    }
+    if (error.message?.includes('invalid_or_expired_invite')) {
+      return { error: new Error('This invite link is invalid or has expired') };
+    }
+    if (error.message?.includes('invalid_invite_role')) {
+      return { error: new Error('This invite link is invalid') };
+    }
+    
+    return { error };
+  }
+
+  // The function returns an array with one row
+  const result = data?.[0];
   
-  if (fetchError || !invite) {
-    return { error: new Error('Invalid or expired invite link') };
+  if (!result) {
+    return { error: new Error('Failed to process invite') };
   }
 
-  // Check if already a contributor
-  const { data: existing } = await supabase
-    .from('vault_contributors')
-    .select('id')
-    .eq('vault_id', invite.vault_id)
-    .eq('user_id', userId)
-    .maybeSingle();
+  // Get the full invite details for the success screen
+  const { data: inviteData } = await getInviteByCode(code);
 
-  if (existing) {
-    return { error: new Error('You are already a contributor to this vault') };
-  }
-
-  // Add as contributor
-  const { error: insertError } = await supabase
-    .from('vault_contributors')
-    .insert({
-      vault_id: invite.vault_id,
-      user_id: userId,
-      role: invite.role,
-      accepted_at: new Date().toISOString(),
-    });
-
-  if (insertError) {
-    console.error('Error accepting invite:', insertError);
-    return { error: insertError };
-  }
-
-  // Increment uses count
-  await supabase
-    .from('invite_links')
-    .update({ uses_count: invite.uses_count + 1 })
-    .eq('id', invite.id);
-
-  return { data: invite, error: null };
+  return { 
+    data: {
+      vault_id: result.vault_id,
+      role: result.role,
+      vaults: inviteData?.vaults
+    }, 
+    error: null 
+  };
 }
