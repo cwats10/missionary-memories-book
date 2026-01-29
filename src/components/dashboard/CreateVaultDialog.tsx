@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Check } from 'lucide-react';
-import { CreateVaultInput, VaultType, BookSize } from '@/hooks/useVaults';
+import { CreateVaultInput, VaultType } from '@/hooks/useVaults';
 import { brandConfig } from '@/config/brandConfig';
 import { cn } from '@/lib/utils';
 
@@ -42,22 +42,12 @@ const vaultTypes: { type: VaultType; name: string; color: string; textColor: str
   },
 ];
 
-const bookSizes: { size: BookSize; name: string; dimensions: string }[] = [
-  { size: '9x9', name: '9×9" Square', dimensions: '229 × 229 mm' },
-  { size: '12x12', name: '12×12" Square', dimensions: '305 × 305 mm' },
-  { size: '9x11', name: '9×11" Landscape', dimensions: '229 × 279 mm' },
-  { size: '11x9', name: '11×9" Portrait', dimensions: '279 × 229 mm' },
-  { size: 'a4', name: 'A4 Portrait', dimensions: '210 × 297 mm (8.3×11.7")' },
-  { size: 'a5', name: 'A5', dimensions: '148 × 210 mm (5.8×8.3")' },
-];
-
 export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<'type' | 'size' | 'details'>('type');
+  const [step, setStep] = useState<'type' | 'details'>('type');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     vault_type: 'farewell' as VaultType,
-    book_size: null as BookSize | null,
     recipient_name: '',
     mission_name: '',
     service_start_date: '',
@@ -68,17 +58,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
 
   const handleTypeSelect = (type: VaultType) => {
     setFormData({ ...formData, vault_type: type });
-    setStep('size');
-  };
-
-  const handleSizeSelect = (size: BookSize) => {
-    setFormData({ ...formData, book_size: size });
-  };
-
-  const handleSizeNext = () => {
-    if (formData.book_size) {
-      setStep('details');
-    }
+    setStep('details');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +73,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
       service_end_date: formData.service_end_date || undefined,
       description: formData.description || undefined,
       vault_type: formData.vault_type,
-      book_size: formData.book_size!,
+      book_size: '12x12',
       contributor_page_limit: formData.contributor_page_limit,
     });
 
@@ -104,7 +84,6 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
       setStep('type');
       setFormData({
         vault_type: 'farewell',
-        book_size: null,
         recipient_name: '',
         mission_name: '',
         service_start_date: '',
@@ -184,74 +163,6 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
                 </button>
               ))}
             </div>
-          </>
-        ) : step === 'size' ? (
-          <>
-            <DialogHeader>
-              <DialogTitle className="font-serif text-2xl">Choose Book Size</DialogTitle>
-              <DialogDescription>
-                Select the size for your printed photo book.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3 py-6">
-              {bookSizes.map((book) => (
-                <button
-                  key={book.size}
-                  type="button"
-                  onClick={() => handleSizeSelect(book.size)}
-                  className={cn(
-                    "relative flex items-center gap-4 p-4 rounded-lg border-2 transition-all hover:shadow-md text-left",
-                    formData.book_size === book.size
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  {/* Size icon preview */}
-                  <div
-                    className={cn(
-                      "rounded flex items-center justify-center shadow-sm flex-shrink-0 border border-border/50",
-                      book.size === '9x9' && "w-12 h-12",
-                      book.size === '12x12' && "w-14 h-14",
-                      book.size === '9x11' && "w-14 h-10",
-                      book.size === '11x9' && "w-10 h-14",
-                      book.size === 'a4' && "w-10 h-14",
-                      book.size === 'a5' && "w-8 h-12"
-                    )}
-                    style={{ backgroundColor: selectedType?.color }}
-                  >
-                    <span
-                      className="text-[4px] font-serif text-center px-0.5 leading-tight"
-                      style={{ color: selectedType?.textColor }}
-                    >
-                      MMV
-                    </span>
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h3 className="font-serif text-lg text-foreground">{book.name}</h3>
-                    <p className="text-sm text-muted-foreground">{book.dimensions}</p>
-                  </div>
-
-                  {formData.book_size === book.size && (
-                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="h-3 w-3 text-primary-foreground" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setStep('type')}>
-                Back
-              </Button>
-              <Button 
-                type="button" 
-                onClick={handleSizeNext}
-                disabled={!formData.book_size}
-              >
-                Next
-              </Button>
-            </DialogFooter>
           </>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -354,7 +265,7 @@ export function CreateVaultDialog({ onCreateVault }: CreateVaultDialogProps) {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setStep('size')}>
+              <Button type="button" variant="outline" onClick={() => setStep('type')}>
                 Back
               </Button>
               <Button type="submit" disabled={loading}>

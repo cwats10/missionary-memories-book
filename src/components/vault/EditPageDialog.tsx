@@ -243,8 +243,8 @@ export function EditPageDialog({ page, bookSize, open, onOpenChange, onSave }: E
               />
               <p className="text-xs text-muted-foreground">
                 {hasImages 
-                  ? `Character limit is ${characterLimits.withImages.toLocaleString()} for ${getBookSizeLabel(bookSize)} books with images.`
-                  : `You have ${characterLimits.noImages.toLocaleString()} characters for ${getBookSizeLabel(bookSize)} books, reduced to ${characterLimits.withImages.toLocaleString()} with images.`
+                  ? `Character limit is ${characterLimits.withImages.toLocaleString()} with images.`
+                  : `You have ${characterLimits.noImages.toLocaleString()} characters, reduced to ${characterLimits.withImages.toLocaleString()} with images.`
                 }
               </p>
             </div>
