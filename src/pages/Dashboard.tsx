@@ -8,6 +8,7 @@ import { CreateVaultDialog } from '@/components/dashboard/CreateVaultDialog';
 import { VaultCard } from '@/components/dashboard/VaultCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
 
 type ViewTab = 'owner' | 'manager' | 'contributor';
@@ -33,8 +34,9 @@ const Dashboard = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground font-serif-text">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background relative">
+        <div className="absolute inset-0 paper-texture pointer-events-none" />
+        <LoadingSpinner message="Loading..." />
       </div>
     );
   }
@@ -58,9 +60,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Paper texture background */}
+      <div className="absolute inset-0 paper-texture pointer-events-none" />
       {/* Header with refined styling */}
-      <header className="border-b border-stone/20 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-stone/20 bg-card/50 backdrop-blur-sm sticky top-0 z-50 relative">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between py-5">
             <a href="/" className="font-serif text-xl tracking-wide hover:opacity-80 transition-opacity">
@@ -103,10 +107,12 @@ const Dashboard = () => {
             ))}
           </nav>
         </div>
+          {/* Gold accent line */}
+          <div className="h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
       </header>
 
       {/* Main Content */}
-      <main className="px-6 py-14">
+      <main className="px-6 py-14 relative z-10">
         <div className="max-w-5xl mx-auto">
           {/* Page Header with refined typography */}
           <div className="flex items-center justify-between mb-10">

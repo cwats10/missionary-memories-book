@@ -278,3 +278,35 @@ All colors MUST be HSL.
     transform: translateY(0);
   }
 }
+
+/* Gold focus states for form inputs */
+@layer utilities {
+  .focus-gold {
+    @apply focus:border-gold/50 focus:ring-1 focus:ring-gold/20 focus:outline-none transition-all duration-200;
+  }
+}
+
+/* Button hover micro-interactions */
+@layer utilities {
+  .btn-premium {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .btn-premium:hover:not(:disabled) {
+    transform: scale(1.02);
+  }
+  
+  .btn-premium:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+/* Skip to content link for accessibility */
+.skip-link {
+  @apply absolute -top-10 left-4 z-[100] bg-primary text-primary-foreground px-4 py-2 rounded-md font-serif-text text-sm;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  @apply top-4;
+}

@@ -17,7 +17,8 @@ import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { ThankYouDialog } from '@/components/vault/ThankYouDialog';
 import { ManagersList } from '@/components/vault/ManagersList';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ArrowLeft, BookOpen, Settings, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -103,8 +104,9 @@ const VaultDetail = () => {
 
   if (authLoading || vaultLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background relative">
+        <div className="absolute inset-0 paper-texture pointer-events-none" />
+        <LoadingSpinner message="Loading vault..." />
       </div>
     );
   }
@@ -245,27 +247,47 @@ const VaultDetail = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <a href="/" className="font-serif text-xl tracking-tight">
-            {brandConfig.name}
-          </a>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-            Dashboard
-          </Button>
+    <div className="min-h-screen bg-background relative">
+      {/* Paper texture background */}
+      <div className="absolute inset-0 paper-texture pointer-events-none" />
+      
+      {/* Header - matches Dashboard styling */}
+      <header className="border-b border-stone/20 bg-card/50 backdrop-blur-sm sticky top-0 z-50 relative">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-between py-5">
+            <a href="/" className="font-serif text-xl tracking-wide hover:opacity-80 transition-opacity">
+              {brandConfig.name}
+            </a>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-stone/30 hover:border-gold/40"
+              onClick={() => navigate('/dashboard')}
+            >
+              Dashboard
+            </Button>
+          </div>
         </div>
+        {/* Gold accent line */}
+        <div className="h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
       </header>
 
       {/* Main Content */}
-      <main className="px-6 py-8">
+      <main className="px-6 py-8 relative z-10">
         <div className="max-w-4xl mx-auto">
-          {/* Back Button */}
-          <Button variant="ghost" size="sm" className="mb-6 -ml-2" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Vaults
-          </Button>
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center gap-2 text-sm mb-6">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="font-serif-text text-muted-foreground hover:text-gold transition-colors"
+            >
+              Dashboard
+            </button>
+            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+            <span className="font-serif-text text-foreground">
+              {vault?.recipient_name || 'Vault'}
+            </span>
+          </nav>
 
           {/* Vault Header */}
           <div className="mb-10">
