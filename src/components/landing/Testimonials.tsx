@@ -1,3 +1,5 @@
+import QuoteMark from "@/components/decorative/QuoteMark";
+
 const testimonials = [
   {
     quote: "When our son opened his Farewell Vault before leaving, he couldn't stop crying. Every page was a reminder that he wasn't alone.",
@@ -18,26 +20,44 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <section className="py-32 px-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Section title */}
-        <h2 className="font-serif text-3xl md:text-4xl text-center mb-20">
+    <section className="py-36 px-6 relative">
+      {/* Subtle paper texture background */}
+      <div className="absolute inset-0 paper-texture pointer-events-none" />
+      
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Section title with gold accent */}
+        <h2 className="font-serif text-3xl md:text-4xl text-center mb-4 tracking-wide">
           Voices from the Journey
         </h2>
+        
+        <div className="flex justify-center mb-20">
+          <div className="w-12 h-px bg-gold/50" />
+        </div>
 
-        {/* Testimonials grid */}
-        <div className="grid md:grid-cols-3 gap-12">
+        {/* Testimonials grid with refined cards */}
+        <div className="grid md:grid-cols-3 gap-10">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="text-center">
-              {/* Quote */}
-              <blockquote className="font-serif text-lg leading-relaxed mb-6 text-foreground/90">
-                "{testimonial.quote}"
+            <div 
+              key={index} 
+              className="text-center bg-card/50 backdrop-blur-sm rounded-lg p-8 shadow-elegant border border-stone/10 hover:shadow-elegant-lg transition-all duration-500"
+            >
+              {/* Decorative quote mark */}
+              <div className="flex justify-center mb-4">
+                <QuoteMark position="open" size="md" />
+              </div>
+              
+              {/* Quote with refined typography */}
+              <blockquote className="font-serif-text text-base leading-relaxed mb-8 text-foreground/85">
+                {testimonial.quote}
               </blockquote>
+              
+              {/* Thin gold rule */}
+              <div className="w-8 h-px bg-gold/40 mx-auto mb-6" />
               
               {/* Attribution */}
               <cite className="not-italic">
-                <p className="font-medium text-foreground mb-1">{testimonial.author}</p>
-                <p className="text-muted-foreground text-sm">{testimonial.context}</p>
+                <p className="font-serif text-foreground mb-1 tracking-wide text-sm">{testimonial.author}</p>
+                <p className="text-muted-foreground text-xs font-serif-text">{testimonial.context}</p>
               </cite>
             </div>
           ))}

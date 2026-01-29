@@ -1,63 +1,100 @@
 import { brandConfig } from "@/config/brandConfig";
+import { Star } from "lucide-react";
 
 const Pricing = () => {
   const { pricing } = brandConfig;
 
   return (
-    <section className="py-32 px-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Section title */}
-        <h2 className="font-serif text-3xl md:text-4xl text-center mb-8">
+    <section className="py-36 px-6 relative">
+      {/* Subtle paper texture */}
+      <div className="absolute inset-0 paper-texture pointer-events-none" />
+      
+      <div className="max-w-4xl mx-auto relative z-10">
+        {/* Section title with gold accent */}
+        <h2 className="font-serif text-3xl md:text-4xl text-center mb-4 tracking-wide">
           Simple, Transparent Pricing
         </h2>
         
-        <p className="text-muted-foreground text-lg text-center max-w-2xl mx-auto mb-20">
+        <div className="flex justify-center mb-8">
+          <div className="w-12 h-px bg-gold/50" />
+        </div>
+        
+        <p className="font-serif-text text-muted-foreground text-lg text-center max-w-2xl mx-auto mb-20">
           No subscriptions. No hidden fees. Just a beautiful book at a fair price.
         </p>
 
-        {/* Pricing cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        {/* Pricing cards with refined styling */}
+        <div className="grid md:grid-cols-2 gap-10 max-w-3xl mx-auto">
           {/* PDF Only */}
-          <div className="bg-card border border-border p-10 rounded text-center">
-            <h3 className="font-serif text-xl mb-2">Digital PDF</h3>
-            <p className="text-muted-foreground text-sm mb-6">Print-ready file</p>
-            <p className="font-serif text-4xl mb-6">${pricing.pdfOnly}</p>
-            <ul className="text-left text-muted-foreground space-y-3 text-sm">
-              <li>• High-resolution 300 DPI</li>
-              <li>• Immediate download</li>
-              <li>• Print anywhere you choose</li>
+          <div className="bg-card border border-stone/20 p-10 rounded shadow-elegant hover:shadow-elegant-lg transition-all duration-500 text-center">
+            <h3 className="font-serif text-xl mb-2 tracking-wide">Digital PDF</h3>
+            <p className="font-serif-text text-muted-foreground text-sm mb-8">Print-ready file</p>
+            <p className="font-serif text-4xl mb-8 tracking-tight">${pricing.pdfOnly}</p>
+            <ul className="text-left font-serif-text text-muted-foreground space-y-3 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-gold/70 mt-0.5">•</span>
+                High-resolution 300 DPI
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-gold/70 mt-0.5">•</span>
+                Immediate download
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-gold/70 mt-0.5">•</span>
+                Print anywhere you choose
+              </li>
             </ul>
           </div>
 
-          {/* Printed Book */}
-          <div className="bg-card border-2 border-primary p-10 rounded text-center">
-            <h3 className="font-serif text-xl mb-2">Printed Hardcover</h3>
-            <p className="text-muted-foreground text-sm mb-6">Delivered to your door</p>
-            <p className="font-serif text-4xl mb-2">${pricing.printedBase}</p>
-            <p className="text-muted-foreground text-sm mb-6">+ ${pricing.perPage}/page</p>
-            <ul className="text-left text-muted-foreground space-y-3 text-sm">
-              <li>• Premium layflat hardcover binding</li>
-              <li>• Archival 170gsm silk paper</li>
-              <li>• PDF included free</li>
-              <li>• Shipped with care</li>
+          {/* Printed Book - recommended */}
+          <div className="bg-card border-2 border-gold/40 p-10 rounded shadow-elegant-lg hover:shadow-elegant-xl transition-all duration-500 text-center relative">
+            {/* Recommended badge */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <div className="flex items-center gap-1.5 bg-gold/10 border border-gold/30 px-4 py-1 rounded-full">
+                <Star className="h-3 w-3 text-gold fill-gold/30" />
+                <span className="text-xs font-serif text-gold tracking-wide">Recommended</span>
+              </div>
+            </div>
+            
+            <h3 className="font-serif text-xl mb-2 tracking-wide">Printed Hardcover</h3>
+            <p className="font-serif-text text-muted-foreground text-sm mb-8">Delivered to your door</p>
+            <p className="font-serif text-4xl mb-2 tracking-tight">${pricing.printedBase}</p>
+            <p className="font-serif-text text-muted-foreground text-sm mb-8">+ ${pricing.perPage}/page</p>
+            <ul className="text-left font-serif-text text-muted-foreground space-y-3 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-gold/70 mt-0.5">•</span>
+                Premium layflat hardcover binding
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-gold/70 mt-0.5">•</span>
+                Archival 170gsm silk paper
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-gold/70 mt-0.5">•</span>
+                PDF included free
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-gold/70 mt-0.5">•</span>
+                Shipped with care
+              </li>
             </ul>
           </div>
         </div>
 
-        {/* Value explanation - why it costs what it does */}
-        <div className="text-center mt-16 max-w-2xl mx-auto">
-          <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+        {/* Value explanation */}
+        <div className="text-center mt-20 max-w-2xl mx-auto">
+          <p className="font-serif-text text-muted-foreground text-sm leading-relaxed mb-12">
             Each book is printed on-demand by professional print partners using archival materials. 
             The price reflects museum-quality construction designed to last generations—not mass-produced shortcuts.
           </p>
         </div>
 
-        {/* Referral mention */}
-        <div className="text-center p-8 bg-muted/50 rounded max-w-xl mx-auto">
-          <p className="text-muted-foreground">
-            <span className="font-medium text-foreground">Share the love:</span> After your purchase, 
-            receive a referral code worth ${pricing.referralDiscount} off for friends—and earn ${pricing.referralCredit} credit 
-            when they order.
+        {/* Referral mention with refined box */}
+        <div className="text-center p-8 bg-card/50 border border-gold/20 rounded max-w-xl mx-auto shadow-elegant">
+          <p className="font-serif-text text-muted-foreground text-sm">
+            <span className="font-serif text-foreground tracking-wide">Share the love:</span>{" "}
+            After your purchase, receive a referral code worth ${pricing.referralDiscount} off for friends—and 
+            earn ${pricing.referralCredit} credit when they order.
           </p>
         </div>
       </div>

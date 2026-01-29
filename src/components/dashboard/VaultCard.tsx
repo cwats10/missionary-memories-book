@@ -2,7 +2,7 @@ import { VaultWithRole, VaultType } from '@/hooks/useVaults';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Eye } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { brandConfig } from '@/config/brandConfig';
 import {
@@ -57,7 +57,7 @@ const getVaultTypeName = (vaultType: VaultType) => {
 export function VaultCard({ vault, onDelete, onView }: VaultCardProps) {
   const statusColors: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
-    published: 'bg-primary/10 text-primary',
+    published: 'bg-gold/15 text-gold',
     printed: 'bg-accent text-accent-foreground',
   };
 
@@ -70,15 +70,15 @@ export function VaultCard({ vault, onDelete, onView }: VaultCardProps) {
   };
 
   return (
-    <Card className="group hover:shadow-md transition-shadow overflow-hidden">
+    <Card className="group shadow-elegant hover:shadow-elegant-lg transition-all duration-500 overflow-hidden border-stone/15 hover:border-gold/30 hover:-translate-y-1">
       <div className="flex">
-        {/* Book cover preview */}
+        {/* Book cover preview with emboss effect */}
         <div
-          className="w-28 flex-shrink-0 flex flex-col items-center justify-center p-4"
+          className="w-28 flex-shrink-0 flex flex-col items-center justify-center p-4 shadow-emboss"
           style={{ backgroundColor: coverColors.bg }}
         >
           <span
-            className="text-[8px] font-serif text-center leading-tight"
+            className="text-[8px] font-serif text-center leading-tight tracking-wide"
             style={{ color: coverColors.text }}
           >
             Mission Memory Vault
@@ -86,35 +86,35 @@ export function VaultCard({ vault, onDelete, onView }: VaultCardProps) {
         </div>
 
         {/* Card content */}
-        <CardContent className="flex-1 p-4">
-          <div className="flex items-start justify-between mb-2">
+        <CardContent className="flex-1 p-5">
+          <div className="flex items-start justify-between mb-3">
             <div>
-              <h3 className="font-serif text-lg text-foreground">{vault.recipient_name}</h3>
-              <p className="text-sm text-muted-foreground">{vault.mission_name}</p>
+              <h3 className="font-serif text-lg text-foreground tracking-wide">{vault.recipient_name}</h3>
+              <p className="text-sm font-serif-text text-muted-foreground">{vault.mission_name}</p>
             </div>
-            <Badge className={statusColors[vault.status] || statusColors.draft}>
+            <Badge className={`${statusColors[vault.status] || statusColors.draft} font-serif-text text-xs`}>
               {vault.status.charAt(0).toUpperCase() + vault.status.slice(1)}
             </Badge>
           </div>
 
           {(vault.service_start_date || vault.service_end_date) && (
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs font-serif-text text-muted-foreground mb-2">
               {formatDate(vault.service_start_date)} — {formatDate(vault.service_end_date)}
             </p>
           )}
 
-          <p className="text-xs text-muted-foreground/70 mb-3">
+          <p className="text-xs font-serif-text text-muted-foreground/60 mb-4">
             {getVaultTypeName(vault.vault_type)}
           </p>
 
-          <div className="flex items-center justify-between pt-3 border-t border-border">
-            <span className="text-xs text-muted-foreground">
+          <div className="flex items-center justify-between pt-4 border-t border-stone/15">
+            <span className="text-xs font-serif-text text-muted-foreground">
               Created {formatDistanceToNow(new Date(vault.created_at), { addSuffix: true })}
             </span>
             <div className="flex gap-2">
               <Button 
                 size="sm" 
-                className="hover:opacity-90"
+                className="hover:opacity-90 shadow-elegant hover:shadow-elegant-lg transition-all duration-300"
                 style={{ 
                   backgroundColor: brandConfig.colors.deepForest.hex,
                   color: brandConfig.colors.boneParchment.hex 
@@ -134,15 +134,15 @@ export function VaultCard({ vault, onDelete, onView }: VaultCardProps) {
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="border-stone/20 shadow-elegant-xl">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this vault?</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="font-serif tracking-wide">Delete this vault?</AlertDialogTitle>
+                      <AlertDialogDescription className="font-serif-text">
                         This will permanently delete this vault for {vault.recipient_name} and all its pages. This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="border-stone/30">Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => onDelete(vault.id)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
