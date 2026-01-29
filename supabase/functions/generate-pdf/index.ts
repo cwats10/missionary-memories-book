@@ -5,66 +5,154 @@ import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  // Allow the browser to read the filename from Content-Disposition
   'Access-Control-Expose-Headers': 'content-disposition',
 };
 
-// Book size dimensions in points (72 points = 1 inch)
-// Prodigi specs: no bleed needed (auto-generated), 10mm safety margin
-const getBookDimensions = (bookSize: string) => {
-  const mmToPoints = (mm: number) => mm * 2.83465; // 1mm = 2.83465 points
+// Fixed 12x12" dimensions (72 points = 1 inch)
+const mmToPoints = (mm: number) => mm * 2.83465;
+const PAGE_WIDTH = 12 * 72;  // 864 points
+const PAGE_HEIGHT = 12 * 72; // 864 points
+const MARGIN = mmToPoints(10); // 10mm safety margin (~28.35 points)
+
+// Gold accent color for decorative elements (#B8A66A)
+const GOLD_COLOR = rgb(0.722, 0.651, 0.416);
+// Warm stone color for subtle borders (#D4C8B8)
+const STONE_COLOR = rgb(0.831, 0.784, 0.722);
+
+// Interior page colors
+const INTERIOR_BG = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
+const INTERIOR_TEXT = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
+
+// Helper function to draw ornamental rule with diamond center
+const drawOrnamentalRule = (
+  page: any,
+  y: number,
+  centerX: number,
+  width: number,
+  font: any,
+  color = GOLD_COLOR
+) => {
+  const halfWidth = width / 2;
+  const lineThickness = 0.75;
+  const diamondGap = 12;
   
-  switch (bookSize) {
-    case '9x9':
-      // 9x9 inches = 229x229mm
-      return {
-        width: 9 * 72,  // 648 points
-        height: 9 * 72, // 648 points
-        margin: mmToPoints(10), // 10mm safety margin (~28.35 points)
-      };
-    case '12x12':
-      // 12x12 inches = 305x305mm
-      return {
-        width: 12 * 72,  // 864 points
-        height: 12 * 72, // 864 points
-        margin: mmToPoints(10),
-      };
-    case '9x11':
-      // 9x11 inches landscape = 229x279mm
-      return {
-        width: 11 * 72,  // 792 points (width is 11")
-        height: 9 * 72,  // 648 points (height is 9")
-        margin: mmToPoints(10),
-      };
-    case '11x9':
-      // 11x9 inches portrait = 279x229mm
-      return {
-        width: 9 * 72,   // 648 points (width is 9")
-        height: 11 * 72, // 792 points (height is 11")
-        margin: mmToPoints(10),
-      };
-    case 'a4':
-      // A4 Portrait: 210x297mm = 8.27x11.69 inches
-      return {
-        width: mmToPoints(210),  // ~595 points
-        height: mmToPoints(297), // ~842 points
-        margin: mmToPoints(10),
-      };
-    case 'a5':
-      // A5: 148x210mm = 5.83x8.27 inches
-      return {
-        width: mmToPoints(148),  // ~420 points
-        height: mmToPoints(210), // ~595 points
-        margin: mmToPoints(10),
-      };
-    default:
-      // Default to 9x9
-      return {
-        width: 9 * 72,
-        height: 9 * 72,
-        margin: mmToPoints(10),
-      };
-  }
+  // Left line
+  page.drawRectangle({
+    x: centerX - halfWidth,
+    y: y - lineThickness / 2,
+    width: halfWidth - diamondGap,
+    height: lineThickness,
+    color,
+  });
+  
+  // Right line
+  page.drawRectangle({
+    x: centerX + diamondGap,
+    y: y - lineThickness / 2,
+    width: halfWidth - diamondGap,
+    height: lineThickness,
+    color,
+  });
+  
+  // Diamond in center (using special character ◆)
+  const diamondChar = '◆';
+  const diamondWidth = font.widthOfTextAtSize(diamondChar, 8);
+  page.drawText(diamondChar, {
+    x: centerX - diamondWidth / 2,
+    y: y - 4,
+    size: 8,
+    font,
+    color,
+  });
+};
+
+// Helper function to draw decorative star
+const drawDecorativeStar = (
+  page: any,
+  x: number,
+  y: number,
+  font: any,
+  color = GOLD_COLOR
+) => {
+  const starChar = '✦';
+  const starWidth = font.widthOfTextAtSize(starChar, 12);
+  page.drawText(starChar, {
+    x: x - starWidth / 2,
+    y: y - 4,
+    size: 12,
+    font,
+    color,
+  });
+};
+
+// Helper function to draw page number
+const drawPageNumber = (
+  page: any,
+  pageNum: number,
+  isLeftPage: boolean,
+  font: any,
+  color = INTERIOR_TEXT
+) => {
+  const numText = String(pageNum);
+  const numWidth = font.widthOfTextAtSize(numText, 10);
+  const x = isLeftPage ? MARGIN : PAGE_WIDTH - MARGIN - numWidth;
+  const y = MARGIN / 2;
+  
+  page.drawText(numText, {
+    x,
+    y,
+    size: 10,
+    font,
+    color,
+  });
+};
+
+// Helper function to draw subtle image border
+const drawImageBorder = (
+  page: any,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color = STONE_COLOR
+) => {
+  const borderThickness = 1;
+  
+  // Top border
+  page.drawRectangle({
+    x: x - borderThickness,
+    y: y + height,
+    width: width + borderThickness * 2,
+    height: borderThickness,
+    color,
+  });
+  
+  // Bottom border
+  page.drawRectangle({
+    x: x - borderThickness,
+    y: y - borderThickness,
+    width: width + borderThickness * 2,
+    height: borderThickness,
+    color,
+  });
+  
+  // Left border
+  page.drawRectangle({
+    x: x - borderThickness,
+    y: y,
+    width: borderThickness,
+    height: height,
+    color,
+  });
+  
+  // Right border
+  page.drawRectangle({
+    x: x + width,
+    y: y,
+    width: borderThickness,
+    height: height,
+    color,
+  });
 };
 
 serve(async (req) => {
@@ -122,7 +210,6 @@ serve(async (req) => {
     const isOwner = vault.owner_id === user.id;
     
     if (!isOwner) {
-      // Check if user is a contributor
       const { data: contributor } = await supabase
         .from('vault_contributors')
         .select('id')
@@ -138,7 +225,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch approved pages only
+    // Fetch approved pages with contributor profiles for attribution
     const { data: pages, error: pagesError } = await supabase
       .from('pages')
       .select('*')
@@ -153,14 +240,41 @@ serve(async (req) => {
       });
     }
 
+    // Fetch contributor profiles for attribution
+    const contributorIds = [...new Set(pages?.map(p => p.contributor_id) || [])];
+    let profilesMap: Record<string, string> = {};
+    
+    if (contributorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', contributorIds);
+      
+      if (profiles) {
+        profiles.forEach(p => {
+          profilesMap[p.user_id] = p.full_name || p.email || 'Anonymous';
+        });
+      }
+    }
+
     // Create PDF document
     const pdfDoc = await PDFDocument.create();
     const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
     const timesRomanBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-    
-    // Get dimensions based on book size
-    const bookSize = vault.book_size || '9x9';
-    const { width: pageWidth, height: pageHeight, margin } = getBookDimensions(bookSize);
+    const timesRomanItalic = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
+    const symbol = await pdfDoc.embedFont(StandardFonts.Symbol);
+
+    // Font sizes (scaled for 12x12)
+    const scaleFactor = PAGE_WIDTH / 648; // Scale based on 9x9 base
+    const coverTitleSize = Math.round(42 * scaleFactor);
+    const recipientSize = Math.round(32 * scaleFactor);
+    const missionSize = Math.round(20 * scaleFactor);
+    const datesSize = Math.round(16 * scaleFactor);
+    const contentTitleSize = Math.round(26 * scaleFactor);
+    const attributionSize = Math.round(14 * scaleFactor);
+    const contentBodySize = Math.round(15 * scaleFactor);
+    const closingSize = Math.round(18 * scaleFactor);
+    const pageNumSize = 11;
 
     // Get cover colors based on vault type
     const getCoverColors = (vaultType: string) => {
@@ -190,13 +304,7 @@ serve(async (req) => {
 
     const coverColors = getCoverColors(vault.vault_type || 'farewell');
 
-    // Interior page colors - consistent across all vaults: #F4F1EC background, #2B2B2A text
-    const interiorBg = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
-    const interiorText = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
-
-    // Cover background images are fetched from Storage (cover-images bucket).
-    // This avoids sending large base64 payloads from the client.
-    // PERFORMANCE: we fetch+embed the cover image ONCE and reuse it for front/back cover.
+    // Cover background image handling
     const getCoverStorageUrls = (vaultType: string) => {
       const baseName = vaultType === 'homecoming'
         ? 'homecoming-cover-bg'
@@ -204,7 +312,6 @@ serve(async (req) => {
           ? 'returned-cover-bg'
           : 'farewell-cover-bg';
 
-      // Prefer JPG (faster/lighter to decode/embed), fall back to legacy PNG.
       return [
         `${supabaseUrl}/storage/v1/object/public/cover-images/${baseName}.jpg`,
         `${supabaseUrl}/storage/v1/object/public/cover-images/${baseName}.png`,
@@ -230,7 +337,6 @@ serve(async (req) => {
           } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
             cachedCoverImage = await pdfDoc.embedJpg(bytes);
           } else {
-            // Best effort: try PNG then JPG
             try {
               cachedCoverImage = await pdfDoc.embedPng(bytes);
             } catch {
@@ -248,12 +354,11 @@ serve(async (req) => {
     };
 
     const drawCoverBackground = async (page: any) => {
-      // Base color first
       page.drawRectangle({
         x: 0,
         y: 0,
-        width: pageWidth,
-        height: pageHeight,
+        width: PAGE_WIDTH,
+        height: PAGE_HEIGHT,
         color: coverColors.bg,
       });
 
@@ -261,80 +366,94 @@ serve(async (req) => {
         const img = await loadCoverImage();
         if (!img) return;
 
-        // "cover" fit (like CSS background-size: cover)
-        const scale = Math.max(pageWidth / img.width, pageHeight / img.height);
+        const scale = Math.max(PAGE_WIDTH / img.width, PAGE_HEIGHT / img.height);
         const drawW = img.width * scale;
         const drawH = img.height * scale;
-        const x = (pageWidth - drawW) / 2;
-        const y = (pageHeight - drawH) / 2;
+        const x = (PAGE_WIDTH - drawW) / 2;
+        const y = (PAGE_HEIGHT - drawH) / 2;
 
         page.drawImage(img, { x, y, width: drawW, height: drawH });
       } catch (e) {
-        // If this fails for any reason, fall back to solid color.
         console.error('Cover embed failed:', e);
       }
     };
 
-    // Calculate font sizes relative to page size (scale based on 9x9 base)
-    const scaleFactor = Math.min(pageWidth, pageHeight) / 648; // 648 = 9 inches * 72
-    const coverTitleSize = Math.round(36 * scaleFactor);
-    const recipientSize = Math.round(28 * scaleFactor);
-    const missionSize = Math.round(18 * scaleFactor);
-    const datesSize = Math.round(14 * scaleFactor);
-    const contentTitleSize = Math.round(24 * scaleFactor);
-    const contentBodySize = Math.round(14 * scaleFactor);
-    const closingSize = Math.round(16 * scaleFactor);
-
-    // Create cover page
-    const coverPage = pdfDoc.addPage([pageWidth, pageHeight]);
-    
-    // Draw cover background (solid + optional texture)
+    // ========== FRONT COVER ==========
+    const coverPage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     await drawCoverBackground(coverPage);
 
-    // Cover title - just "Mission Memory Vault" centered
     const titleText = 'Mission Memory Vault';
     const titleWidth = timesRomanBold.widthOfTextAtSize(titleText, coverTitleSize);
-    coverPage.drawText(titleText, {
-      x: (pageWidth - titleWidth) / 2,
-      y: pageHeight / 2,
-      size: coverTitleSize,
-      font: timesRomanBold,
-      color: coverColors.text,
-    });
+    const coverCenterY = PAGE_HEIGHT / 2;
+    
+    // Ornamental rule above title
+    drawOrnamentalRule(coverPage, coverCenterY + 50, PAGE_WIDTH / 2, 200, timesRoman, coverColors.text);
+    
+    // Title with letter-spacing simulation (draw each letter separately)
+    const letterSpacing = 4;
+    let titleX = (PAGE_WIDTH - titleWidth - (titleText.length - 1) * letterSpacing) / 2;
+    for (const char of titleText) {
+      const charWidth = timesRomanBold.widthOfTextAtSize(char, coverTitleSize);
+      coverPage.drawText(char, {
+        x: titleX,
+        y: coverCenterY,
+        size: coverTitleSize,
+        font: timesRomanBold,
+        color: coverColors.text,
+      });
+      titleX += charWidth + letterSpacing;
+    }
+    
+    // Ornamental rule below title
+    drawOrnamentalRule(coverPage, coverCenterY - 50, PAGE_WIDTH / 2, 200, timesRoman, coverColors.text);
 
-    // Add title page (dedication page) with interior colors
-    const titlePage = pdfDoc.addPage([pageWidth, pageHeight]);
+    // ========== TITLE PAGE (DEDICATION) ==========
+    const titlePage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     titlePage.drawRectangle({
       x: 0,
       y: 0,
-      width: pageWidth,
-      height: pageHeight,
-      color: interiorBg,
+      width: PAGE_WIDTH,
+      height: PAGE_HEIGHT,
+      color: INTERIOR_BG,
     });
 
-    // Recipient name
+    const titleCenterY = PAGE_HEIGHT / 2 + 40;
+    
+    // Decorative star at top
+    drawDecorativeStar(titlePage, PAGE_WIDTH / 2, titleCenterY + 140, timesRoman);
+    
+    // Thin gold rule above recipient name
+    titlePage.drawRectangle({
+      x: PAGE_WIDTH / 2 - 100,
+      y: titleCenterY + 100,
+      width: 200,
+      height: 0.75,
+      color: GOLD_COLOR,
+    });
+
+    // Recipient name (larger, bold)
     const recipientWidth = timesRomanBold.widthOfTextAtSize(vault.recipient_name, recipientSize);
     titlePage.drawText(vault.recipient_name, {
-      x: (pageWidth - recipientWidth) / 2,
-      y: pageHeight / 2 + 60 * scaleFactor,
+      x: (PAGE_WIDTH - recipientWidth) / 2,
+      y: titleCenterY + 40,
       size: recipientSize,
       font: timesRomanBold,
-      color: interiorText,
+      color: INTERIOR_TEXT,
     });
 
-    // Mission name
+    // Mission name (italic)
     if (vault.mission_name) {
-      const missionWidth = timesRoman.widthOfTextAtSize(vault.mission_name, missionSize);
+      const missionWidth = timesRomanItalic.widthOfTextAtSize(vault.mission_name, missionSize);
       titlePage.drawText(vault.mission_name, {
-        x: (pageWidth - missionWidth) / 2,
-        y: pageHeight / 2 + 20 * scaleFactor,
+        x: (PAGE_WIDTH - missionWidth) / 2,
+        y: titleCenterY - 10,
         size: missionSize,
-        font: timesRoman,
-        color: interiorText,
+        font: timesRomanItalic,
+        color: INTERIOR_TEXT,
       });
     }
 
-    // Service dates
+    // Service dates with em-dash
     if (vault.service_start_date || vault.service_end_date) {
       const formatDate = (dateStr: string | null) => {
         if (!dateStr) return '';
@@ -344,58 +463,87 @@ serve(async (req) => {
       const datesText = `${formatDate(vault.service_start_date)} — ${formatDate(vault.service_end_date)}`;
       const datesWidth = timesRoman.widthOfTextAtSize(datesText, datesSize);
       titlePage.drawText(datesText, {
-        x: (pageWidth - datesWidth) / 2,
-        y: pageHeight / 2 - 20 * scaleFactor,
+        x: (PAGE_WIDTH - datesWidth) / 2,
+        y: titleCenterY - 50,
         size: datesSize,
         font: timesRoman,
-        color: interiorText,
+        color: INTERIOR_TEXT,
       });
     }
 
-    // Add content pages (only approved pages)
-    for (let i = 0; i < pages.length; i++) {
-      const page = pages[i];
-      const contentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+    // Thin gold rule below dates
+    titlePage.drawRectangle({
+      x: PAGE_WIDTH / 2 - 100,
+      y: titleCenterY - 90,
+      width: 200,
+      height: 0.75,
+      color: GOLD_COLOR,
+    });
+    
+    // Decorative star at bottom
+    drawDecorativeStar(titlePage, PAGE_WIDTH / 2, titleCenterY - 130, timesRoman);
+
+    // ========== CONTENT PAGES ==========
+    let contentPageNumber = 1; // Start numbering from first content page
+    
+    for (let i = 0; i < (pages?.length || 0); i++) {
+      const pageData = pages![i];
+      const contentPage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
       
       // Draw interior background
       contentPage.drawRectangle({
         x: 0,
         y: 0,
-        width: pageWidth,
-        height: pageHeight,
-        color: interiorBg,
+        width: PAGE_WIDTH,
+        height: PAGE_HEIGHT,
+        color: INTERIOR_BG,
       });
       
-      let yPosition = pageHeight - margin;
+      let yPosition = PAGE_HEIGHT - MARGIN - 20;
 
-      // Title - centered
-      if (page.title) {
-        const pageTitleWidth = timesRomanBold.widthOfTextAtSize(page.title, contentTitleSize);
-        contentPage.drawText(page.title, {
-          x: (pageWidth - pageTitleWidth) / 2,
+      // Title - centered, bold
+      if (pageData.title) {
+        const pageTitleWidth = timesRomanBold.widthOfTextAtSize(pageData.title, contentTitleSize);
+        contentPage.drawText(pageData.title, {
+          x: (PAGE_WIDTH - pageTitleWidth) / 2,
           y: yPosition,
           size: contentTitleSize,
           font: timesRomanBold,
-          color: interiorText,
+          color: INTERIOR_TEXT,
         });
-        yPosition -= 40 * scaleFactor;
+        yPosition -= 30;
       }
 
-      // Embed images (support multiple images)
-      const imageUrls = page.image_urls?.length > 0 
-        ? page.image_urls 
-        : page.image_url 
-          ? [page.image_url] 
+      // Contributor attribution (italic)
+      const authorName = profilesMap[pageData.contributor_id] || 'Anonymous';
+      const attributionText = `A memory from ${authorName}`;
+      const attributionWidth = timesRomanItalic.widthOfTextAtSize(attributionText, attributionSize);
+      contentPage.drawText(attributionText, {
+        x: (PAGE_WIDTH - attributionWidth) / 2,
+        y: yPosition,
+        size: attributionSize,
+        font: timesRomanItalic,
+        color: INTERIOR_TEXT,
+      });
+      yPosition -= 25;
+
+      // Small decorative divider
+      drawOrnamentalRule(contentPage, yPosition, PAGE_WIDTH / 2, 120, timesRoman);
+      yPosition -= 35;
+
+      // Embed images with borders
+      const imageUrls = pageData.image_urls?.length > 0 
+        ? pageData.image_urls 
+        : pageData.image_url 
+          ? [pageData.image_url] 
           : [];
       
       if (imageUrls.length > 0) {
-        // Calculate layout based on number of images
-        const maxTotalWidth = pageWidth - (margin * 2);
-        const maxHeightPerImage = (imageUrls.length === 1 ? 300 : 200) * scaleFactor;
-        const gapBetweenImages = 10 * scaleFactor;
+        const maxTotalWidth = PAGE_WIDTH - (MARGIN * 2);
+        const maxHeightPerImage = (imageUrls.length === 1 ? 320 : 220) * scaleFactor;
+        const gapBetweenImages = 12 * scaleFactor;
         
-        // For multiple images, arrange them side by side
-        let currentX = margin;
+        let currentX = MARGIN;
         const availableWidthPerImage = imageUrls.length === 1 
           ? maxTotalWidth 
           : (maxTotalWidth - (gapBetweenImages * (imageUrls.length - 1))) / imageUrls.length;
@@ -423,9 +571,14 @@ serve(async (req) => {
                 
                 maxImageHeight = Math.max(maxImageHeight, scaledHeight);
                 
+                const imageY = yPosition - scaledHeight;
+                
+                // Draw subtle border around image
+                drawImageBorder(contentPage, currentX, imageY, scaledWidth, scaledHeight);
+                
                 contentPage.drawImage(image, {
                   x: currentX,
-                  y: yPosition - scaledHeight,
+                  y: imageY,
                   width: scaledWidth,
                   height: scaledHeight,
                 });
@@ -435,19 +588,18 @@ serve(async (req) => {
             }
           } catch (imgError) {
             console.error('Failed to embed image:', imgError);
-            // Continue without the image
           }
         }
         
-        yPosition -= maxImageHeight + 20 * scaleFactor;
+        yPosition -= maxImageHeight + 25;
       }
 
-      // Content text with word wrapping
-      if (page.content) {
-        const words = page.content.split(' ');
+      // Content text with word wrapping and improved line height
+      if (pageData.content) {
+        const words = pageData.content.split(' ');
         let currentLine = '';
-        const maxLineWidth = pageWidth - (margin * 2);
-        const lineHeight = 20 * scaleFactor;
+        const maxLineWidth = PAGE_WIDTH - (MARGIN * 2);
+        const lineHeight = 22 * scaleFactor; // Slightly increased line height
 
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
@@ -455,17 +607,16 @@ serve(async (req) => {
           
           if (testWidth > maxLineWidth && currentLine) {
             contentPage.drawText(currentLine, {
-              x: margin,
+              x: MARGIN,
               y: yPosition,
               size: contentBodySize,
               font: timesRoman,
-              color: interiorText,
+              color: INTERIOR_TEXT,
             });
             yPosition -= lineHeight;
             currentLine = word;
             
-            // Check if we need a new page
-            if (yPosition < margin) {
+            if (yPosition < MARGIN + 30) {
               break;
             }
           } else {
@@ -473,49 +624,63 @@ serve(async (req) => {
           }
         }
         
-        // Draw remaining text
-        if (currentLine && yPosition >= margin) {
+        if (currentLine && yPosition >= MARGIN + 30) {
           contentPage.drawText(currentLine, {
-            x: margin,
+            x: MARGIN,
             y: yPosition,
             size: contentBodySize,
             font: timesRoman,
-            color: interiorText,
+            color: INTERIOR_TEXT,
           });
         }
       }
+
+      // Page number in outer margin (odd pages right, even pages left)
+      const isLeftPage = contentPageNumber % 2 === 0;
+      drawPageNumber(contentPage, contentPageNumber, isLeftPage, timesRoman);
+      contentPageNumber++;
     }
 
-    // Add closing message page with interior colors
-    const closingPage = pdfDoc.addPage([pageWidth, pageHeight]);
+    // ========== CLOSING PAGE ==========
+    const closingPage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     closingPage.drawRectangle({
       x: 0,
       y: 0,
-      width: pageWidth,
-      height: pageHeight,
-      color: interiorBg,
+      width: PAGE_WIDTH,
+      height: PAGE_HEIGHT,
+      color: INTERIOR_BG,
     });
     
+    const closingCenterY = PAGE_HEIGHT / 2 + 60;
+    
+    // Decorative star at top
+    drawDecorativeStar(closingPage, PAGE_WIDTH / 2, closingCenterY + 80, timesRoman);
+    
+    // Ornamental rule above message
+    drawOrnamentalRule(closingPage, closingCenterY + 40, PAGE_WIDTH / 2, 180, timesRoman);
+
+    // Closing message in italic, word-wrapped and centered
     const closingMessage = 'The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever';
-    const closingMaxWidth = pageWidth - (margin * 2);
+    const closingMaxWidth = PAGE_WIDTH - (MARGIN * 3);
     const closingWords = closingMessage.split(' ');
     let closingLine = '';
-    let closingY = pageHeight / 2 + 20 * scaleFactor;
+    let closingY = closingCenterY - 20;
+    const closingLineHeight = 28;
     
     for (const word of closingWords) {
       const testLine = closingLine ? `${closingLine} ${word}` : word;
-      const testWidth = timesRoman.widthOfTextAtSize(testLine, closingSize);
+      const testWidth = timesRomanItalic.widthOfTextAtSize(testLine, closingSize);
       
       if (testWidth > closingMaxWidth && closingLine) {
-        const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingSize);
+        const lineWidth = timesRomanItalic.widthOfTextAtSize(closingLine, closingSize);
         closingPage.drawText(closingLine, {
-          x: (pageWidth - lineWidth) / 2,
+          x: (PAGE_WIDTH - lineWidth) / 2,
           y: closingY,
           size: closingSize,
-          font: timesRoman,
-          color: interiorText,
+          font: timesRomanItalic,
+          color: INTERIOR_TEXT,
         });
-        closingY -= 24 * scaleFactor;
+        closingY -= closingLineHeight;
         closingLine = word;
       } else {
         closingLine = testLine;
@@ -523,44 +688,46 @@ serve(async (req) => {
     }
     
     if (closingLine) {
-      const lineWidth = timesRoman.widthOfTextAtSize(closingLine, closingSize);
+      const lineWidth = timesRomanItalic.widthOfTextAtSize(closingLine, closingSize);
       closingPage.drawText(closingLine, {
-        x: (pageWidth - lineWidth) / 2,
+        x: (PAGE_WIDTH - lineWidth) / 2,
         y: closingY,
         size: closingSize,
-        font: timesRoman,
-        color: interiorText,
+        font: timesRomanItalic,
+        color: INTERIOR_TEXT,
       });
     }
+    
+    // Ornamental rule below message
+    drawOrnamentalRule(closingPage, closingY - 50, PAGE_WIDTH / 2, 180, timesRoman);
+    
+    // Decorative star at bottom
+    drawDecorativeStar(closingPage, PAGE_WIDTH / 2, closingY - 90, timesRoman);
 
-    // Add back cover (blank - just the cover color/texture, no text or branding)
-    const backCover = pdfDoc.addPage([pageWidth, pageHeight]);
+    // ========== BACK COVER ==========
+    const backCover = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     await drawCoverBackground(backCover);
 
-    // Keep the very last page as the back cover (no trailing blank page).
-    // If we need to pad to an even page count, insert a blank page *before* the back cover.
+    // Ensure even page count by adding padding page before back cover if needed
     const totalPages = pdfDoc.getPageCount();
     if (totalPages % 2 !== 0) {
       const backCoverIndex = pdfDoc.getPageCount() - 1;
-      const paddingPage = pdfDoc.insertPage(backCoverIndex, [pageWidth, pageHeight]);
+      const paddingPage = pdfDoc.insertPage(backCoverIndex, [PAGE_WIDTH, PAGE_HEIGHT]);
       paddingPage.drawRectangle({
         x: 0,
         y: 0,
-        width: pageWidth,
-        height: pageHeight,
-        color: interiorBg,
+        width: PAGE_WIDTH,
+        height: PAGE_HEIGHT,
+        color: INTERIOR_BG,
       });
     }
 
     // Serialize PDF
     const pdfBytes = await pdfDoc.save();
-
-    // Normalize to a plain Uint8Array backed by ArrayBuffer (avoids Deno typecheck issues)
     const pdfBody = new Uint8Array(pdfBytes);
 
     const filename = `${vault.title.replace(/[^a-zA-Z0-9]/g, '-')}-memory-book.pdf`;
 
-    // Return as binary to avoid expensive base64 conversion (prevents WORKER_LIMIT)
     return new Response(pdfBody, {
       status: 200,
       headers: {

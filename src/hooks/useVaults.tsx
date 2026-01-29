@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
 export type VaultType = 'farewell' | 'homecoming' | 'returned';
-export type BookSize = '9x9' | '12x12' | '9x11' | '11x9' | 'a4' | 'a5';
+export type BookSize = '12x12';
 
 export interface Vault {
   id: string;
@@ -150,7 +150,7 @@ export function useVaults() {
         description: input.description || null,
         occasion: input.occasion || null,
         vault_type: input.vault_type,
-        book_size: input.book_size || '9x9',
+        book_size: '12x12',
         contributor_page_limit: input.contributor_page_limit || 1,
       })
       .select()
