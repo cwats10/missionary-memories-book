@@ -129,33 +129,72 @@ export function BookPreview({
     }
 
     if (currentSpread === 1) {
-      // Title page
+      // Title page - enhanced to match PDF styling
       return (
         <div className="flex h-full">
           <div className="w-1/2 border-r border-border bg-background" />
 
           <div className="w-1/2 flex flex-col items-center justify-center p-8 text-center bg-background">
-            <h3 className="font-serif text-2xl md:text-3xl mb-6 text-foreground">{recipientName}</h3>
-            {missionName && <p className="font-serif text-lg mb-2 text-foreground/80">{missionName}</p>}
+            {/* Decorative star */}
+            <span className="text-gold/60 text-sm mb-4">✦</span>
+            
+            {/* Ornamental rule */}
+            <div className="w-24 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent mb-6" />
+            
+            {/* Recipient name */}
+            <h3 className="font-serif text-2xl md:text-3xl mb-4 text-foreground tracking-wide">{recipientName}</h3>
+            
+            {/* Mission name in italic */}
+            {missionName && (
+              <p className="font-serif italic text-lg mb-3 text-foreground/80">{missionName}</p>
+            )}
+            
+            {/* Dates with em-dash */}
             {(serviceStartDate || serviceEndDate) && (
-              <p className="text-base text-foreground/70">
+              <p className="text-sm text-foreground/70 tracking-wide">
                 {formatDate(serviceStartDate)} — {formatDate(serviceEndDate)}
               </p>
             )}
+            
+            {/* Ornamental rule */}
+            <div className="w-24 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent mt-6" />
+            
+            {/* Decorative star */}
+            <span className="text-gold/60 text-sm mt-4">✦</span>
           </div>
         </div>
       );
     }
 
     if (currentSpread === totalSpreads - 1) {
-      // Back cover
+      // Back cover - enhanced to match PDF styling
       return (
         <div className="flex h-full">
-          {/* Inside back cover - closing message */}
-          <div className="w-1/2 border-r border-border flex items-center justify-center bg-background px-8">
-            <p className="text-sm italic font-serif text-foreground/60 text-center leading-relaxed">
-              The voices, moments, and messages that shape a life‑changing journey have been recorded and will now last forever
+          {/* Inside back cover - closing message with decorative elements */}
+          <div className="w-1/2 border-r border-border flex flex-col items-center justify-center bg-background px-8">
+            {/* Decorative star */}
+            <span className="text-gold/60 text-sm mb-3">✦</span>
+            
+            {/* Ornamental rule */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-12 h-px bg-gradient-to-r from-transparent to-gold/50" />
+              <span className="text-gold text-[8px]">◆</span>
+              <div className="w-12 h-px bg-gradient-to-l from-transparent to-gold/50" />
+            </div>
+            
+            <p className="text-sm italic font-serif text-foreground/60 text-center leading-relaxed max-w-[200px]">
+              The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever
             </p>
+            
+            {/* Ornamental rule */}
+            <div className="flex items-center gap-2 mt-4">
+              <div className="w-12 h-px bg-gradient-to-r from-transparent to-gold/50" />
+              <span className="text-gold text-[8px]">◆</span>
+              <div className="w-12 h-px bg-gradient-to-l from-transparent to-gold/50" />
+            </div>
+            
+            {/* Decorative star */}
+            <span className="text-gold/60 text-sm mt-3">✦</span>
           </div>
 
           {/* Back cover - blank, just the color/image */}

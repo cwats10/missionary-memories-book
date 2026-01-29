@@ -7,6 +7,8 @@ import { brandConfig } from '@/config/brandConfig';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import GoldDivider from '@/components/decorative/GoldDivider';
 
 const AcceptInvite = () => {
   const { code } = useParams<{ code: string }>();
@@ -68,80 +70,112 @@ const AcceptInvite = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background relative">
+        <div className="absolute inset-0 paper-texture pointer-events-none" />
+        <LoadingSpinner message="Loading invite..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Paper texture background */}
+      <div className="absolute inset-0 paper-texture pointer-events-none" />
+      
       {/* Header */}
-      <header className="border-b border-border px-6 py-4">
+      <header className="border-b border-stone/20 px-6 py-4 relative z-10">
         <div className="max-w-6xl mx-auto">
-          <a href="/" className="font-serif text-xl tracking-tight">
+          <a href="/" className="font-serif text-xl tracking-wide hover:opacity-80 transition-opacity">
             {brandConfig.name}
           </a>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="px-6 py-16">
+      <main className="px-6 py-16 relative z-10">
         <div className="max-w-md mx-auto">
           {error ? (
-            <Card>
-              <CardContent className="pt-8 text-center">
-                <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h2 className="font-serif text-2xl mb-2">Invalid Invite</h2>
-                <p className="text-muted-foreground mb-6">{error}</p>
-                <Button onClick={() => navigate('/')}>Go Home</Button>
+            <Card className="shadow-elegant border-stone/30 overflow-hidden">
+              <CardContent className="pt-10 pb-8 text-center">
+                <div className="mb-6 relative inline-block">
+                  <div className="p-4 bg-destructive/10 rounded-full border border-destructive/20">
+                    <XCircle className="h-10 w-10 text-destructive" />
+                  </div>
+                </div>
+                <h2 className="font-serif text-2xl mb-3 tracking-wide">Invalid Invite</h2>
+                <p className="font-serif-text text-muted-foreground mb-6">{error}</p>
+                <GoldDivider variant="simple" className="mb-6 max-w-[100px] mx-auto" />
+                <Button 
+                  onClick={() => navigate('/')}
+                  className="font-serif transition-all duration-200 hover:scale-[1.02]"
+                >
+                  Go Home
+                </Button>
               </CardContent>
             </Card>
           ) : success ? (
-            <Card>
-              <CardContent className="pt-8 text-center">
-                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <h2 className="font-serif text-2xl mb-2">You're In!</h2>
-                <p className="text-muted-foreground mb-6">
+            <Card className="shadow-elegant border-gold/30 overflow-hidden">
+              <CardContent className="pt-10 pb-8 text-center">
+                <div className="mb-6 relative inline-block">
+                  <div className="p-4 bg-green-500/10 rounded-full border border-green-500/20">
+                    <CheckCircle className="h-10 w-10 text-green-600" />
+                  </div>
+                  {/* Decorative stars */}
+                  <span className="absolute -top-1 -left-1 text-gold/50 text-[10px]">✦</span>
+                  <span className="absolute -top-1 -right-1 text-gold/50 text-[10px]">✦</span>
+                </div>
+                <h2 className="font-serif text-2xl mb-3 tracking-wide">You're In!</h2>
+                <p className="font-serif-text text-muted-foreground mb-6">
                   You've been added as a {invite?.role === 'coowner' ? 'manager' : 'contributor'} to "{invite?.vaults?.title}".
                 </p>
-                <Button onClick={() => navigate(`/vault/${invite?.vault_id}`)}>
+                <GoldDivider variant="diamond" className="mb-6 max-w-[150px] mx-auto" />
+                <Button 
+                  onClick={() => navigate(`/vault/${invite?.vault_id}`)}
+                  className="font-serif transition-all duration-200 hover:scale-[1.02]"
+                >
                   Go to Vault
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardHeader className="text-center">
-                <div className="mx-auto p-3 bg-primary/5 rounded-full w-fit mb-4">
-                  <BookOpen className="h-8 w-8 text-primary" />
+            <Card className="shadow-elegant border-stone/30 overflow-hidden">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto mb-6 relative">
+                  <div className="p-4 bg-gold/10 rounded-full border border-gold/20">
+                    <BookOpen className="h-8 w-8 text-gold" />
+                  </div>
+                  {/* Decorative stars */}
+                  <span className="absolute -top-1 -left-1 text-gold/40 text-[10px]">✦</span>
+                  <span className="absolute -top-1 -right-1 text-gold/40 text-[10px]">✦</span>
                 </div>
-                <CardTitle className="font-serif text-2xl">
+                <CardTitle className="font-serif text-2xl tracking-wide">
                   You're Invited!
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="font-serif-text">
                   {invite?.role === 'coowner' 
                     ? `You've been invited to be a manager of "${invite?.vaults?.title}"`
                     : "You've been invited to contribute to a memory vault."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <GoldDivider variant="simple" className="mb-6" />
+                
                 {invite?.vaults && (
-                  <div className="bg-muted/50 rounded-lg p-4 mb-6">
+                  <div className="bg-background/50 rounded-lg p-5 mb-6 border border-gold/20 shadow-sm">
                     <h3 className="font-serif text-lg mb-1">{invite.vaults.title}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm font-serif-text text-muted-foreground">
                       For {invite.vaults.recipient_name}
                     </p>
                   </div>
                 )}
 
                 {!user ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground text-center mb-4">
+                  <div className="space-y-4">
+                    <p className="text-sm font-serif-text text-muted-foreground text-center">
                       Sign in or create an account to accept this invite.
                     </p>
                     <Button 
-                      className="w-full" 
+                      className="w-full font-serif transition-all duration-200 hover:scale-[1.02]" 
                       onClick={() => navigate(`/auth?redirect=/invite/${code}`)}
                     >
                       Sign In to Accept
@@ -149,7 +183,7 @@ const AcceptInvite = () => {
                   </div>
                 ) : (
                   <Button 
-                    className="w-full" 
+                    className="w-full font-serif transition-all duration-200 hover:scale-[1.02]" 
                     onClick={handleAccept}
                     disabled={accepting}
                   >
@@ -161,6 +195,9 @@ const AcceptInvite = () => {
           )}
         </div>
       </main>
+      
+      {/* Footer accent */}
+      <div className="fixed bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
     </div>
   );
 };
