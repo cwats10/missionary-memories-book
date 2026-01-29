@@ -15,7 +15,7 @@ import { Image, X, Upload } from 'lucide-react';
 import { Page } from '@/hooks/usePages';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { BookSize } from '@/hooks/useVaults';
-import { MAX_IMAGES, getCharacterLimits, getBookSizeLabel } from '@/lib/bookSizeLimits';
+import { MAX_IMAGES, getCharacterLimits } from '@/lib/bookSizeLimits';
 
 interface EditPageDialogProps {
   page: Page | null;

@@ -16,7 +16,7 @@ import { Plus, Image, X, Upload } from 'lucide-react';
 import { CreatePageInput } from '@/hooks/usePages';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { BookSize } from '@/hooks/useVaults';
-import { MAX_IMAGES, getCharacterLimits, getBookSizeLabel } from '@/lib/bookSizeLimits';
+import { MAX_IMAGES, getCharacterLimits } from '@/lib/bookSizeLimits';
 
 interface CreatePageDialogProps {
   vaultId: string;
