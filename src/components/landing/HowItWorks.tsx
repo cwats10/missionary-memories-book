@@ -10,7 +10,7 @@ const steps = [
     number: "01",
     title: "Create a Vault",
     description: "Start a memory book for your missionary, graduate, or anyone embarking on a meaningful journey.",
-    image: null // Abstract step, no specific image
+    image: null
   },
   {
     number: "02", 
@@ -28,7 +28,7 @@ const steps = [
     number: "04",
     title: "Review & Finalize",
     description: "Preview the complete book, arrange pages, and select which contributions to include.",
-    image: null // UI/review step
+    image: null
   },
   {
     number: "05",
@@ -76,13 +76,18 @@ const HowItWorks = () => {
   );
 
   return (
-    <section id="how-it-works" className="py-32 px-6 overflow-hidden">
+    <section id="how-it-works" className="py-36 px-6 overflow-hidden">
       <div className="max-w-6xl mx-auto">
-        {/* Section title */}
-        <h2 className="font-serif text-3xl md:text-4xl text-center mb-6">
+        {/* Section title with gold accent */}
+        <h2 className="font-serif text-3xl md:text-4xl text-center mb-4 tracking-wide">
           How It Works
         </h2>
-        <p className="text-muted-foreground text-lg text-center max-w-2xl mx-auto mb-16">
+        
+        <div className="flex justify-center mb-8">
+          <div className="w-12 h-px bg-gold/50" />
+        </div>
+        
+        <p className="font-serif-text text-muted-foreground text-lg text-center max-w-2xl mx-auto mb-20">
           Five simple steps from first invitation to treasured keepsake.
         </p>
 
@@ -96,13 +101,17 @@ const HowItWorks = () => {
               >
                 <div 
                   className={`
-                    bg-card border border-border rounded-lg overflow-hidden
-                    transition-all duration-700 ease-out
-                    ${selectedIndex === index ? 'opacity-100 scale-100' : 'opacity-50 scale-95'}
+                    bg-card border border-stone/10 rounded-lg overflow-hidden
+                    shadow-elegant
+                    transition-all duration-700 ease-in-out
+                    ${selectedIndex === index 
+                      ? 'opacity-100 scale-100 shadow-elegant-lg' 
+                      : 'opacity-40 scale-95'
+                    }
                   `}
                 >
                   {/* Image or placeholder */}
-                  <div className="aspect-[4/3] bg-muted/30 relative overflow-hidden">
+                  <div className="aspect-[4/3] bg-muted/20 relative overflow-hidden">
                     {step.image ? (
                       <img 
                         src={step.image} 
@@ -111,26 +120,29 @@ const HowItWorks = () => {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-bone to-stone/30">
-                        <span className="font-serif text-6xl text-charcoal/20">{step.number}</span>
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-bone to-stone/20">
+                        <span className="font-serif text-6xl text-gold/20">{step.number}</span>
                       </div>
                     )}
                   </div>
                   
                   {/* Content */}
-                  <div className="p-8">
-                    {/* Number badge */}
-                    <span className="inline-block font-serif text-stone text-sm mb-3">
+                  <div className="p-10">
+                    {/* Number badge with gold accent */}
+                    <span className="inline-block font-serif text-gold/70 text-sm mb-4 tracking-widest">
                       Step {step.number}
                     </span>
                     
+                    {/* Thin divider */}
+                    <div className="w-6 h-px bg-gold/30 mb-4" />
+                    
                     {/* Title */}
-                    <h3 className="font-serif text-xl md:text-2xl mb-3">
+                    <h3 className="font-serif text-xl md:text-2xl mb-4 tracking-wide">
                       {step.title}
                     </h3>
                     
                     {/* Description */}
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="font-serif-text text-muted-foreground leading-relaxed">
                       {step.description}
                     </p>
                   </div>
@@ -140,8 +152,8 @@ const HowItWorks = () => {
           </div>
         </div>
 
-        {/* Dot indicators */}
-        <div className="flex justify-center gap-2 mt-10">
+        {/* Refined dot indicators */}
+        <div className="flex justify-center gap-3 mt-12">
           {steps.map((_, index) => (
             <button
               key={index}
@@ -149,10 +161,10 @@ const HowItWorks = () => {
               aria-label={`Go to step ${index + 1}`}
               onClick={() => scrollTo(index)}
               className={`
-                w-2 h-2 rounded-full transition-all duration-500 ease-out
+                h-2 rounded-full transition-all duration-500 ease-in-out
                 ${selectedIndex === index 
-                  ? 'bg-primary w-8' 
-                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                  ? 'bg-gold w-8' 
+                  : 'bg-stone/30 hover:bg-stone/50 w-2'
                 }
               `}
             />
@@ -160,7 +172,7 @@ const HowItWorks = () => {
         </div>
 
         {/* Subtle progress hint */}
-        <p className="text-center text-muted-foreground/50 text-xs mt-6">
+        <p className="text-center font-serif-text text-muted-foreground/40 text-xs mt-8 tracking-wide">
           Auto-advances every 5 seconds • Hover to pause
         </p>
       </div>

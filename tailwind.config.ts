@@ -63,16 +63,27 @@ export default {
         stone: "hsl(var(--stone))",
         forest: "hsl(var(--forest))",
         gold: "hsl(var(--gold))",
+        "gold-light": "hsl(var(--gold-light))",
+        "gold-dark": "hsl(var(--gold-dark))",
       },
       fontFamily: {
         serif: ["'DM Serif Display'", "Georgia", "serif"],
         "serif-text": ["'DM Serif Text'", "Georgia", "serif"],
         sans: ["'Inter'", "system-ui", "sans-serif"],
       },
+      letterSpacing: {
+        "extra-wide": "0.15em",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        "elegant": "0 4px 20px -4px hsl(36 20% 20% / 0.12), 0 2px 8px -2px hsl(36 20% 20% / 0.08)",
+        "elegant-lg": "0 8px 40px -8px hsl(36 20% 20% / 0.15), 0 4px 16px -4px hsl(36 20% 20% / 0.1)",
+        "elegant-xl": "0 16px 60px -12px hsl(36 20% 20% / 0.2), 0 8px 24px -8px hsl(36 20% 20% / 0.12)",
+        "emboss": "inset 0 1px 2px hsl(0 0% 100% / 0.15), inset 0 -1px 2px hsl(36 20% 20% / 0.1), 0 2px 8px -2px hsl(36 20% 20% / 0.1)",
       },
       keyframes: {
         "accordion-down": {
@@ -91,10 +102,21 @@ export default {
             height: "0",
           },
         },
+        "fade-up": {
+          from: {
+            opacity: "0",
+            transform: "translateY(20px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-up": "fade-up 0.6s ease-out forwards",
       },
     },
   },

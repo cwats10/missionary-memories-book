@@ -6,6 +6,7 @@ import Testimonials from "@/components/landing/Testimonials";
 import TrustIndicators from "@/components/landing/TrustIndicators";
 import Pricing from "@/components/landing/Pricing";
 import Footer from "@/components/landing/Footer";
+import GoldDivider from "@/components/decorative/GoldDivider";
 
 const Index = () => {
   return (
@@ -13,19 +14,20 @@ const Index = () => {
       {/* 
         Mission Memory Vault™ Landing Page
         
-        Design Philosophy (High Quality Website Framework):
+        Design Philosophy (Heirloom-Quality Elegance):
         - Visual Authority: Clean, generous spacing, controlled palette
         - Emotional Storytelling: Connect to memory, identity, legacy
-        - Craftsmanship: Explain materials, durability, quality
+        - Craftsmanship: Premium materials, durability, museum-quality
         - Trust Signals: Testimonials, guarantees, security
-        - Value Framing: Explain why it's worth the price
-        - Calm, confident language without hype or pressure
+        - Value Framing: Explain why it's worth the investment
+        - Gold accents used as jewelry - sparingly to signal value
+        - Refined typography with serif text for elegance
       */}
       
       <Hero />
       
-      {/* Thin divider - gold accent used sparingly */}
-      <div className="max-w-xs mx-auto h-px bg-gold/30" />
+      {/* Ornate gold divider */}
+      <GoldDivider variant="diamond" className="my-4" />
       
       <HowItWorks />
       
@@ -35,7 +37,8 @@ const Index = () => {
       
       <Testimonials />
       
-      <div className="max-w-xs mx-auto h-px bg-gold/30" />
+      {/* Ornate divider before trust indicators */}
+      <GoldDivider variant="ornate" className="my-4" />
       
       <TrustIndicators />
       
