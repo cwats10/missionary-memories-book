@@ -2,8 +2,9 @@ import { Page } from '@/hooks/usePages';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { GripVertical, Trash2, Edit, Send, User } from 'lucide-react';
+import { GripVertical, Trash2, Edit, Send, User, Image, Layout, FileText, List } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { TEMPLATE_SPECS, PageTemplate } from '@/lib/pdfTemplates';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +16,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+
+const TEMPLATE_ICONS: Record<PageTemplate, React.ElementType> = {
+  hero_image: Image,
+  image_reflection: Layout,
+  story: FileText,
+  timeline: List,
+};
 
 interface PageCardProps {
   page: Page;
@@ -95,7 +103,23 @@ export function PageCard({
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <h3 className="font-medium text-foreground truncate">{page.title || 'Untitled Memory'}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-foreground truncate">{page.title || 'Untitled Memory'}</h3>
+                      {/* Template indicator */}
+                      {(() => {
+                        const template = page.page_template || 'image_reflection';
+                        const TemplateIcon = TEMPLATE_ICONS[template];
+                        const spec = TEMPLATE_SPECS[template];
+                        return (
+                          <span 
+                            className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded"
+                            title={spec.name}
+                          >
+                            <TemplateIcon className="h-3 w-3" />
+                          </span>
+                        );
+                      })()}
+                    </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       {page.contributor_name && (
                         <span className="flex items-center gap-1">

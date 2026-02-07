@@ -12,31 +12,48 @@ const corsHeaders = {
 const mmToPoints = (mm: number) => mm * 2.83465;
 const PAGE_WIDTH = 12 * 72;  // 864 points
 const PAGE_HEIGHT = 12 * 72; // 864 points
-const MARGIN = mmToPoints(10); // 10mm safety margin (~28.35 points)
 
-// Gold accent color for decorative elements (#B8A66A)
-const GOLD_COLOR = rgb(0.722, 0.651, 0.416);
-// Warm stone color for subtle borders (#D4C8B8)
-const STONE_COLOR = rgb(0.831, 0.784, 0.722);
+// Margins - generous for print quality
+const MARGIN = {
+  outer: mmToPoints(20),
+  inner: mmToPoints(25),
+  top: mmToPoints(25),
+  bottom: mmToPoints(20),
+};
+const BLEED = mmToPoints(3);
 
-// Interior page colors
-const INTERIOR_BG = rgb(0.957, 0.945, 0.925); // #F4F1EC bone parchment
-const INTERIOR_TEXT = rgb(0.169, 0.169, 0.165); // #2B2B2A deep charcoal
+// Color palette (strict neutral)
+const COLORS = {
+  text: rgb(0.169, 0.169, 0.165),      // warm charcoal #2B2B2A
+  gold: rgb(0.722, 0.651, 0.416),       // muted gold #B8A66A (dividers only)
+  stone: rgb(0.831, 0.784, 0.722),      // warm stone #D4C8B8
+  caption: rgb(0.4, 0.4, 0.4),          // quiet gray
+  interiorBg: rgb(0.957, 0.945, 0.925), // bone parchment #F4F1EC
+};
 
-// Helper function to draw ornamental rule with diamond center
+// Typography constants
+const TYPOGRAPHY = {
+  body: { size: 11, lineHeight: 1.5 },
+  caption: { size: 8 },
+  dropCap: { size: 48, lines: 3 },
+  title: { size: 26 },
+  attribution: { size: 14 },
+  heading: { size: 18 },
+};
+
+// Helper: Draw ornamental rule with diamond center
 const drawOrnamentalRule = (
   page: any,
   y: number,
   centerX: number,
   width: number,
   font: any,
-  color = GOLD_COLOR
+  color = COLORS.gold
 ) => {
   const halfWidth = width / 2;
   const lineThickness = 0.75;
   const diamondGap = 12;
   
-  // Left line
   page.drawRectangle({
     x: centerX - halfWidth,
     y: y - lineThickness / 2,
@@ -45,7 +62,6 @@ const drawOrnamentalRule = (
     color,
   });
   
-  // Right line
   page.drawRectangle({
     x: centerX + diamondGap,
     y: y - lineThickness / 2,
@@ -54,7 +70,6 @@ const drawOrnamentalRule = (
     color,
   });
   
-  // Diamond in center (using special character ◆)
   const diamondChar = '◆';
   const diamondWidth = font.widthOfTextAtSize(diamondChar, 8);
   page.drawText(diamondChar, {
@@ -66,13 +81,13 @@ const drawOrnamentalRule = (
   });
 };
 
-// Helper function to draw decorative star
+// Helper: Draw decorative star
 const drawDecorativeStar = (
   page: any,
   x: number,
   y: number,
   font: any,
-  color = GOLD_COLOR
+  color = COLORS.gold
 ) => {
   const starChar = '✦';
   const starWidth = font.widthOfTextAtSize(starChar, 12);
@@ -85,18 +100,18 @@ const drawDecorativeStar = (
   });
 };
 
-// Helper function to draw page number
+// Helper: Draw page number
 const drawPageNumber = (
   page: any,
   pageNum: number,
   isLeftPage: boolean,
   font: any,
-  color = INTERIOR_TEXT
+  color = COLORS.text
 ) => {
   const numText = String(pageNum);
   const numWidth = font.widthOfTextAtSize(numText, 10);
-  const x = isLeftPage ? MARGIN : PAGE_WIDTH - MARGIN - numWidth;
-  const y = MARGIN / 2;
+  const x = isLeftPage ? MARGIN.outer : PAGE_WIDTH - MARGIN.outer - numWidth;
+  const y = MARGIN.bottom / 2;
   
   page.drawText(numText, {
     x,
@@ -107,53 +122,448 @@ const drawPageNumber = (
   });
 };
 
-// Helper function to draw subtle image border
+// Helper: Draw image border
 const drawImageBorder = (
   page: any,
   x: number,
   y: number,
   width: number,
   height: number,
-  color = STONE_COLOR
+  color = COLORS.stone
 ) => {
-  const borderThickness = 1;
-  
-  // Top border
-  page.drawRectangle({
-    x: x - borderThickness,
-    y: y + height,
-    width: width + borderThickness * 2,
-    height: borderThickness,
-    color,
-  });
-  
-  // Bottom border
-  page.drawRectangle({
-    x: x - borderThickness,
-    y: y - borderThickness,
-    width: width + borderThickness * 2,
-    height: borderThickness,
-    color,
-  });
-  
-  // Left border
-  page.drawRectangle({
-    x: x - borderThickness,
-    y: y,
-    width: borderThickness,
-    height: height,
-    color,
-  });
-  
-  // Right border
-  page.drawRectangle({
-    x: x + width,
-    y: y,
-    width: borderThickness,
-    height: height,
-    color,
-  });
+  const t = 1;
+  page.drawRectangle({ x: x - t, y: y + height, width: width + t * 2, height: t, color });
+  page.drawRectangle({ x: x - t, y: y - t, width: width + t * 2, height: t, color });
+  page.drawRectangle({ x: x - t, y, width: t, height, color });
+  page.drawRectangle({ x: x + width, y, width: t, height, color });
 };
+
+// Helper: Word wrap text
+const wrapText = (text: string, font: any, fontSize: number, maxWidth: number): string[] => {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+  
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+    
+    if (testWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+};
+
+// ========== TEMPLATE RENDERERS ==========
+
+interface RenderContext {
+  pdfDoc: any;
+  fonts: {
+    timesRoman: any;
+    timesRomanBold: any;
+    timesRomanItalic: any;
+    helvetica: any;
+  };
+  authorName: string;
+}
+
+// Template 1: Full-Bleed Hero Image
+const renderHeroImage = async (
+  ctx: RenderContext,
+  pageData: any,
+  pageNum: number
+) => {
+  const { pdfDoc, fonts } = ctx;
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  
+  // Full bleed image (edge to edge)
+  const imageUrls = pageData.image_urls?.length > 0 
+    ? pageData.image_urls 
+    : pageData.image_url ? [pageData.image_url] : [];
+  
+  if (imageUrls.length > 0) {
+    try {
+      const res = await fetch(imageUrls[0]);
+      if (res.ok) {
+        const bytes = await res.arrayBuffer();
+        const contentType = res.headers.get('content-type') || '';
+        
+        let img;
+        if (contentType.includes('png')) {
+          img = await pdfDoc.embedPng(bytes);
+        } else {
+          img = await pdfDoc.embedJpg(bytes);
+        }
+        
+        if (img) {
+          // Cover entire page (full bleed)
+          const scale = Math.max(PAGE_WIDTH / img.width, PAGE_HEIGHT / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          const x = (PAGE_WIDTH - w) / 2;
+          const y = (PAGE_HEIGHT - h) / 2;
+          
+          page.drawImage(img, { x, y, width: w, height: h });
+        }
+      }
+    } catch (e) {
+      console.error('Hero image embed failed:', e);
+    }
+  }
+  
+  // Optional caption (bottom left, small neutral sans-serif)
+  if (pageData.caption) {
+    const captionY = BLEED + 10;
+    page.drawText(pageData.caption, {
+      x: BLEED + 15,
+      y: captionY,
+      size: TYPOGRAPHY.caption.size,
+      font: fonts.helvetica,
+      color: rgb(1, 1, 1), // White text on image
+    });
+  }
+  
+  return page;
+};
+
+// Template 2: Image + Reflection (default)
+const renderImageReflection = async (
+  ctx: RenderContext,
+  pageData: any,
+  pageNum: number
+) => {
+  const { pdfDoc, fonts, authorName } = ctx;
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  
+  // Interior background
+  page.drawRectangle({
+    x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLORS.interiorBg,
+  });
+  
+  let y = PAGE_HEIGHT - MARGIN.top;
+  
+  // Title (centered, bold)
+  if (pageData.title) {
+    const titleWidth = fonts.timesRomanBold.widthOfTextAtSize(pageData.title, TYPOGRAPHY.title.size);
+    page.drawText(pageData.title, {
+      x: (PAGE_WIDTH - titleWidth) / 2,
+      y,
+      size: TYPOGRAPHY.title.size,
+      font: fonts.timesRomanBold,
+      color: COLORS.text,
+    });
+    y -= 30;
+  }
+  
+  // Attribution (italic)
+  const attrText = `A memory from ${authorName}`;
+  const attrWidth = fonts.timesRomanItalic.widthOfTextAtSize(attrText, TYPOGRAPHY.attribution.size);
+  page.drawText(attrText, {
+    x: (PAGE_WIDTH - attrWidth) / 2,
+    y,
+    size: TYPOGRAPHY.attribution.size,
+    font: fonts.timesRomanItalic,
+    color: COLORS.text,
+  });
+  y -= 25;
+  
+  // Ornamental divider
+  drawOrnamentalRule(page, y, PAGE_WIDTH / 2, 120, fonts.timesRoman);
+  y -= 35;
+  
+  // Image (max 60% of content area)
+  const imageUrls = pageData.image_urls?.length > 0 
+    ? pageData.image_urls 
+    : pageData.image_url ? [pageData.image_url] : [];
+  
+  const contentWidth = PAGE_WIDTH - MARGIN.outer - MARGIN.inner;
+  const maxImageHeight = (PAGE_HEIGHT - MARGIN.top - MARGIN.bottom) * 0.6;
+  
+  if (imageUrls.length > 0) {
+    try {
+      const res = await fetch(imageUrls[0]);
+      if (res.ok) {
+        const bytes = await res.arrayBuffer();
+        const contentType = res.headers.get('content-type') || '';
+        
+        let img;
+        if (contentType.includes('png')) {
+          img = await pdfDoc.embedPng(bytes);
+        } else {
+          img = await pdfDoc.embedJpg(bytes);
+        }
+        
+        if (img) {
+          const scale = Math.min(contentWidth / img.width, maxImageHeight / img.height, 1);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          const imgX = (PAGE_WIDTH - w) / 2;
+          const imgY = y - h;
+          
+          drawImageBorder(page, imgX, imgY, w, h);
+          page.drawImage(img, { x: imgX, y: imgY, width: w, height: h });
+          y = imgY - 25;
+        }
+      }
+    } catch (e) {
+      console.error('Image embed failed:', e);
+    }
+  }
+  
+  // Reflection text (serif, generous line spacing)
+  if (pageData.content) {
+    const lineHeight = TYPOGRAPHY.body.size * TYPOGRAPHY.body.lineHeight;
+    const lines = wrapText(pageData.content, fonts.timesRoman, TYPOGRAPHY.body.size, contentWidth);
+    
+    for (const line of lines) {
+      if (y < MARGIN.bottom + 30) break;
+      page.drawText(line, {
+        x: MARGIN.inner,
+        y,
+        size: TYPOGRAPHY.body.size,
+        font: fonts.timesRoman,
+        color: COLORS.text,
+      });
+      y -= lineHeight;
+    }
+  }
+  
+  // Page number
+  drawPageNumber(page, pageNum, pageNum % 2 === 0, fonts.timesRoman);
+  
+  return page;
+};
+
+// Template 3: Long-Form Story Page
+const renderStory = async (
+  ctx: RenderContext,
+  pageData: any,
+  pageNum: number
+) => {
+  const { pdfDoc, fonts, authorName } = ctx;
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  
+  page.drawRectangle({
+    x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLORS.interiorBg,
+  });
+  
+  // Wide margins for readability
+  const wideMargin = mmToPoints(30);
+  const contentWidth = PAGE_WIDTH - wideMargin * 2;
+  let y = PAGE_HEIGHT - MARGIN.top;
+  
+  // Title
+  if (pageData.title) {
+    const titleWidth = fonts.timesRomanBold.widthOfTextAtSize(pageData.title, TYPOGRAPHY.title.size);
+    page.drawText(pageData.title, {
+      x: (PAGE_WIDTH - titleWidth) / 2,
+      y,
+      size: TYPOGRAPHY.title.size,
+      font: fonts.timesRomanBold,
+      color: COLORS.text,
+    });
+    y -= 35;
+  }
+  
+  // Attribution
+  const attrText = `A memory from ${authorName}`;
+  const attrWidth = fonts.timesRomanItalic.widthOfTextAtSize(attrText, TYPOGRAPHY.attribution.size);
+  page.drawText(attrText, {
+    x: (PAGE_WIDTH - attrWidth) / 2,
+    y,
+    size: TYPOGRAPHY.attribution.size,
+    font: fonts.timesRomanItalic,
+    color: COLORS.text,
+  });
+  y -= 40;
+  
+  // Story text with optional drop cap
+  if (pageData.content) {
+    const content = pageData.content;
+    const lineHeight = TYPOGRAPHY.body.size * TYPOGRAPHY.body.lineHeight;
+    
+    // Drop cap (first letter large)
+    const firstLetter = content.charAt(0).toUpperCase();
+    const restOfFirstWord = content.substring(1).split(' ')[0];
+    const restOfText = content.substring(firstLetter.length + restOfFirstWord.length).trim();
+    
+    // Draw drop cap
+    const dropCapSize = TYPOGRAPHY.dropCap.size;
+    const dropCapHeight = dropCapSize * 0.75;
+    page.drawText(firstLetter, {
+      x: wideMargin,
+      y: y - dropCapHeight + 12,
+      size: dropCapSize,
+      font: fonts.timesRomanBold,
+      color: COLORS.text,
+    });
+    
+    const dropCapWidth = fonts.timesRomanBold.widthOfTextAtSize(firstLetter, dropCapSize) + 8;
+    
+    // First few lines wrap around drop cap
+    const dropCapLines = 3;
+    const narrowWidth = contentWidth - dropCapWidth;
+    
+    // First word after drop cap
+    page.drawText(restOfFirstWord, {
+      x: wideMargin + dropCapWidth,
+      y,
+      size: TYPOGRAPHY.body.size,
+      font: fonts.timesRoman,
+      color: COLORS.text,
+    });
+    
+    const firstWordWidth = fonts.timesRoman.widthOfTextAtSize(restOfFirstWord + ' ', TYPOGRAPHY.body.size);
+    let remainingText = restOfText;
+    let currentX = wideMargin + dropCapWidth + firstWordWidth;
+    let linesDrawn = 0;
+    
+    // Draw text wrapping around drop cap
+    const words = remainingText.split(' ');
+    let wordIndex = 0;
+    
+    while (linesDrawn < dropCapLines && wordIndex < words.length) {
+      const word = words[wordIndex];
+      const wordWidth = fonts.timesRoman.widthOfTextAtSize(word + ' ', TYPOGRAPHY.body.size);
+      const maxX = linesDrawn === 0 ? wideMargin + contentWidth : wideMargin + dropCapWidth + narrowWidth;
+      
+      if (currentX + wordWidth > maxX) {
+        y -= lineHeight;
+        linesDrawn++;
+        currentX = wideMargin + dropCapWidth;
+      }
+      
+      if (linesDrawn < dropCapLines) {
+        page.drawText(word + ' ', {
+          x: currentX,
+          y,
+          size: TYPOGRAPHY.body.size,
+          font: fonts.timesRoman,
+          color: COLORS.text,
+        });
+        currentX += wordWidth;
+        wordIndex++;
+      }
+    }
+    
+    y -= lineHeight;
+    
+    // Remaining text (full width)
+    const remainingWords = words.slice(wordIndex).join(' ');
+    if (remainingWords) {
+      const lines = wrapText(remainingWords, fonts.timesRoman, TYPOGRAPHY.body.size, contentWidth);
+      for (const line of lines) {
+        if (y < MARGIN.bottom + 30) break;
+        page.drawText(line, {
+          x: wideMargin,
+          y,
+          size: TYPOGRAPHY.body.size,
+          font: fonts.timesRoman,
+          color: COLORS.text,
+        });
+        y -= lineHeight;
+      }
+    }
+  }
+  
+  drawPageNumber(page, pageNum, pageNum % 2 === 0, fonts.timesRoman);
+  return page;
+};
+
+// Template 4: Timeline/Highlights
+const renderTimeline = async (
+  ctx: RenderContext,
+  pageData: any,
+  pageNum: number
+) => {
+  const { pdfDoc, fonts } = ctx;
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  
+  page.drawRectangle({
+    x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLORS.interiorBg,
+  });
+  
+  let y = PAGE_HEIGHT - MARGIN.top;
+  const contentX = MARGIN.inner + 20;
+  
+  // Title (e.g., "Transfers & Companions")
+  if (pageData.title) {
+    page.drawText(pageData.title.toUpperCase(), {
+      x: MARGIN.inner,
+      y,
+      size: TYPOGRAPHY.heading.size,
+      font: fonts.timesRomanBold,
+      color: COLORS.text,
+    });
+    y -= 8;
+    
+    // Underline
+    const titleWidth = fonts.timesRomanBold.widthOfTextAtSize(pageData.title.toUpperCase(), TYPOGRAPHY.heading.size);
+    page.drawRectangle({
+      x: MARGIN.inner,
+      y,
+      width: titleWidth,
+      height: 1,
+      color: COLORS.gold,
+    });
+    y -= 35;
+  }
+  
+  // Timeline entries
+  const entries = pageData.timeline_data || [];
+  const entrySpacing = 28;
+  
+  for (const entry of entries) {
+    if (y < MARGIN.bottom + 30) break;
+    
+    // Date (bold)
+    if (entry.date) {
+      page.drawText(entry.date, {
+        x: MARGIN.inner,
+        y,
+        size: TYPOGRAPHY.body.size,
+        font: fonts.timesRomanBold,
+        color: COLORS.text,
+      });
+    }
+    
+    // Description with bullet
+    if (entry.description) {
+      const bulletChar = '·';
+      page.drawText(bulletChar, {
+        x: contentX - 12,
+        y: y - 16,
+        size: TYPOGRAPHY.body.size + 4,
+        font: fonts.timesRoman,
+        color: COLORS.gold,
+      });
+      
+      const lines = wrapText(entry.description, fonts.timesRoman, TYPOGRAPHY.body.size, PAGE_WIDTH - contentX - MARGIN.outer);
+      for (let i = 0; i < lines.length; i++) {
+        page.drawText(lines[i], {
+          x: contentX,
+          y: y - 16 - (i * 14),
+          size: TYPOGRAPHY.body.size,
+          font: fonts.timesRoman,
+          color: COLORS.text,
+        });
+      }
+      y -= 16 + (lines.length * 14);
+    }
+    
+    y -= entrySpacing - 16;
+  }
+  
+  drawPageNumber(page, pageNum, pageNum % 2 === 0, fonts.timesRoman);
+  return page;
+};
+
+// ========== MAIN HANDLER ==========
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -165,7 +575,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get authorization header
+    // Auth check
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -174,7 +584,6 @@ serve(async (req) => {
       });
     }
 
-    // Verify the user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
@@ -192,7 +601,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch vault details
+    // Fetch vault
     const { data: vault, error: vaultError } = await supabase
       .from('vaults')
       .select('*')
@@ -206,9 +615,8 @@ serve(async (req) => {
       });
     }
 
-    // Authorization check: verify user is owner or contributor
+    // Authorization check
     const isOwner = vault.owner_id === user.id;
-    
     if (!isOwner) {
       const { data: contributor } = await supabase
         .from('vault_contributors')
@@ -218,14 +626,14 @@ serve(async (req) => {
         .maybeSingle();
       
       if (!contributor) {
-        return new Response(JSON.stringify({ error: 'You do not have access to this vault' }), {
+        return new Response(JSON.stringify({ error: 'Access denied' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
 
-    // Fetch approved pages with contributor profiles for attribution
+    // Fetch approved pages
     const { data: pages, error: pagesError } = await supabase
       .from('pages')
       .select('*')
@@ -240,7 +648,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch contributor profiles for attribution
+    // Fetch contributor profiles
     const contributorIds = [...new Set(pages?.map(p => p.contributor_id) || [])];
     let profilesMap: Record<string, string> = {};
     
@@ -257,478 +665,223 @@ serve(async (req) => {
       }
     }
 
-    // Create PDF document
+    // Create PDF
     const pdfDoc = await PDFDocument.create();
-    const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-    const timesRomanBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-    const timesRomanItalic = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
-    const symbol = await pdfDoc.embedFont(StandardFonts.Symbol);
+    
+    // Set PDF metadata
+    pdfDoc.setTitle(`${vault.recipient_name} - Mission Memory Vault`);
+    pdfDoc.setAuthor('Mission Memory Vault');
+    pdfDoc.setSubject(vault.mission_name || 'Mission Memory Book');
+    pdfDoc.setCreator('Mission Memory Vault');
+    pdfDoc.setCreationDate(new Date());
+    
+    const fonts = {
+      timesRoman: await pdfDoc.embedFont(StandardFonts.TimesRoman),
+      timesRomanBold: await pdfDoc.embedFont(StandardFonts.TimesRomanBold),
+      timesRomanItalic: await pdfDoc.embedFont(StandardFonts.TimesRomanItalic),
+      helvetica: await pdfDoc.embedFont(StandardFonts.Helvetica),
+    };
 
-    // Font sizes (scaled for 12x12)
-    const scaleFactor = PAGE_WIDTH / 648; // Scale based on 9x9 base
-    const coverTitleSize = Math.round(42 * scaleFactor);
-    const recipientSize = Math.round(32 * scaleFactor);
-    const missionSize = Math.round(20 * scaleFactor);
-    const datesSize = Math.round(16 * scaleFactor);
-    const contentTitleSize = Math.round(26 * scaleFactor);
-    const attributionSize = Math.round(14 * scaleFactor);
-    const contentBodySize = Math.round(15 * scaleFactor);
-    const closingSize = Math.round(18 * scaleFactor);
-    const pageNumSize = 11;
-
-    // Get cover colors based on vault type
+    // Cover colors by vault type
     const getCoverColors = (vaultType: string) => {
       switch (vaultType) {
         case 'farewell':
-          return {
-            bg: rgb(0.957, 0.945, 0.925), // #F4F1EC
-            text: rgb(0.169, 0.169, 0.165), // #2B2B2A
-          };
+          return { bg: rgb(0.957, 0.945, 0.925), text: rgb(0.169, 0.169, 0.165) };
         case 'homecoming':
-          return {
-            bg: rgb(0.184, 0.243, 0.212), // #2F3E36
-            text: rgb(0.957, 0.945, 0.925), // #F4F1EC
-          };
+          return { bg: rgb(0.184, 0.243, 0.212), text: rgb(0.957, 0.945, 0.925) };
         case 'returned':
-          return {
-            bg: rgb(0.169, 0.169, 0.165), // #2B2B2A
-            text: rgb(0.957, 0.945, 0.925), // #F4F1EC
-          };
+          return { bg: rgb(0.169, 0.169, 0.165), text: rgb(0.957, 0.945, 0.925) };
         default:
-          return {
-            bg: rgb(0.957, 0.945, 0.925),
-            text: rgb(0.169, 0.169, 0.165),
-          };
+          return { bg: rgb(0.957, 0.945, 0.925), text: rgb(0.169, 0.169, 0.165) };
       }
     };
 
     const coverColors = getCoverColors(vault.vault_type || 'farewell');
 
-    // Cover background image handling
+    // Load cover background image
     const getCoverStorageUrls = (vaultType: string) => {
       const baseName = vaultType === 'homecoming'
         ? 'homecoming-cover-bg'
         : vaultType === 'returned'
           ? 'returned-cover-bg'
           : 'farewell-cover-bg';
-
       return [
         `${supabaseUrl}/storage/v1/object/public/cover-images/${baseName}.jpg`,
         `${supabaseUrl}/storage/v1/object/public/cover-images/${baseName}.png`,
       ];
     };
 
-    const coverImageUrls = getCoverStorageUrls(vault.vault_type || 'farewell');
-    let cachedCoverImage: any | null = null;
-
-    const loadCoverImage = async () => {
-      if (cachedCoverImage) return cachedCoverImage;
-
-      for (const url of coverImageUrls) {
-        try {
-          const res = await fetch(url);
-          if (!res.ok) continue;
-
-          const bytes = new Uint8Array(await res.arrayBuffer());
-          const contentType = res.headers.get('content-type') || '';
-
-          if (contentType.includes('png')) {
-            cachedCoverImage = await pdfDoc.embedPng(bytes);
-          } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
-            cachedCoverImage = await pdfDoc.embedJpg(bytes);
-          } else {
-            try {
-              cachedCoverImage = await pdfDoc.embedPng(bytes);
-            } catch {
-              cachedCoverImage = await pdfDoc.embedJpg(bytes);
-            }
-          }
-
-          return cachedCoverImage;
-        } catch (e) {
-          console.error('Cover load failed:', url, e);
-        }
-      }
-
-      return null;
-    };
-
-    const drawCoverBackground = async (page: any) => {
-      page.drawRectangle({
-        x: 0,
-        y: 0,
-        width: PAGE_WIDTH,
-        height: PAGE_HEIGHT,
-        color: coverColors.bg,
-      });
-
+    let coverImage: any = null;
+    const coverUrls = getCoverStorageUrls(vault.vault_type || 'farewell');
+    for (const url of coverUrls) {
       try {
-        const img = await loadCoverImage();
-        if (!img) return;
-
-        const scale = Math.max(PAGE_WIDTH / img.width, PAGE_HEIGHT / img.height);
-        const drawW = img.width * scale;
-        const drawH = img.height * scale;
-        const x = (PAGE_WIDTH - drawW) / 2;
-        const y = (PAGE_HEIGHT - drawH) / 2;
-
-        page.drawImage(img, { x, y, width: drawW, height: drawH });
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        const ct = res.headers.get('content-type') || '';
+        coverImage = ct.includes('png') 
+          ? await pdfDoc.embedPng(bytes)
+          : await pdfDoc.embedJpg(bytes);
+        break;
       } catch (e) {
-        console.error('Cover embed failed:', e);
+        console.error('Cover load failed:', url);
+      }
+    }
+
+    const drawCoverBackground = (page: any) => {
+      page.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: coverColors.bg });
+      if (coverImage) {
+        const scale = Math.max(PAGE_WIDTH / coverImage.width, PAGE_HEIGHT / coverImage.height);
+        const w = coverImage.width * scale;
+        const h = coverImage.height * scale;
+        page.drawImage(coverImage, { x: (PAGE_WIDTH - w) / 2, y: (PAGE_HEIGHT - h) / 2, width: w, height: h });
       }
     };
 
     // ========== FRONT COVER ==========
     const coverPage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    await drawCoverBackground(coverPage);
-
+    drawCoverBackground(coverPage);
+    
     const titleText = 'Mission Memory Vault';
-    const titleWidth = timesRomanBold.widthOfTextAtSize(titleText, coverTitleSize);
     const coverCenterY = PAGE_HEIGHT / 2;
     
-    // Ornamental rule above title
-    drawOrnamentalRule(coverPage, coverCenterY + 50, PAGE_WIDTH / 2, 200, timesRoman, coverColors.text);
+    drawOrnamentalRule(coverPage, coverCenterY + 50, PAGE_WIDTH / 2, 200, fonts.timesRoman, coverColors.text);
     
-    // Title with letter-spacing simulation (draw each letter separately)
+    // Title with letter spacing
+    const coverTitleSize = 56;
     const letterSpacing = 4;
-    let titleX = (PAGE_WIDTH - titleWidth - (titleText.length - 1) * letterSpacing) / 2;
+    let titleX = (PAGE_WIDTH - fonts.timesRomanBold.widthOfTextAtSize(titleText, coverTitleSize) - (titleText.length - 1) * letterSpacing) / 2;
     for (const char of titleText) {
-      const charWidth = timesRomanBold.widthOfTextAtSize(char, coverTitleSize);
-      coverPage.drawText(char, {
-        x: titleX,
-        y: coverCenterY,
-        size: coverTitleSize,
-        font: timesRomanBold,
-        color: coverColors.text,
-      });
+      const charWidth = fonts.timesRomanBold.widthOfTextAtSize(char, coverTitleSize);
+      coverPage.drawText(char, { x: titleX, y: coverCenterY, size: coverTitleSize, font: fonts.timesRomanBold, color: coverColors.text });
       titleX += charWidth + letterSpacing;
     }
     
-    // Ornamental rule below title
-    drawOrnamentalRule(coverPage, coverCenterY - 50, PAGE_WIDTH / 2, 200, timesRoman, coverColors.text);
+    drawOrnamentalRule(coverPage, coverCenterY - 50, PAGE_WIDTH / 2, 200, fonts.timesRoman, coverColors.text);
 
-    // ========== TITLE PAGE (DEDICATION) ==========
+    // ========== TITLE PAGE ==========
     const titlePage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    titlePage.drawRectangle({
-      x: 0,
-      y: 0,
-      width: PAGE_WIDTH,
-      height: PAGE_HEIGHT,
-      color: INTERIOR_BG,
-    });
-
+    titlePage.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLORS.interiorBg });
+    
     const titleCenterY = PAGE_HEIGHT / 2 + 40;
     
-    // Decorative star at top
-    drawDecorativeStar(titlePage, PAGE_WIDTH / 2, titleCenterY + 140, timesRoman);
+    drawDecorativeStar(titlePage, PAGE_WIDTH / 2, titleCenterY + 140, fonts.timesRoman);
+    titlePage.drawRectangle({ x: PAGE_WIDTH / 2 - 100, y: titleCenterY + 100, width: 200, height: 0.75, color: COLORS.gold });
     
-    // Thin gold rule above recipient name
-    titlePage.drawRectangle({
-      x: PAGE_WIDTH / 2 - 100,
-      y: titleCenterY + 100,
-      width: 200,
-      height: 0.75,
-      color: GOLD_COLOR,
-    });
-
-    // Recipient name (larger, bold)
-    const recipientWidth = timesRomanBold.widthOfTextAtSize(vault.recipient_name, recipientSize);
+    const recipientSize = 42;
+    const recipientWidth = fonts.timesRomanBold.widthOfTextAtSize(vault.recipient_name, recipientSize);
     titlePage.drawText(vault.recipient_name, {
       x: (PAGE_WIDTH - recipientWidth) / 2,
       y: titleCenterY + 40,
       size: recipientSize,
-      font: timesRomanBold,
-      color: INTERIOR_TEXT,
+      font: fonts.timesRomanBold,
+      color: COLORS.text,
     });
-
-    // Mission name (italic)
+    
     if (vault.mission_name) {
-      const missionWidth = timesRomanItalic.widthOfTextAtSize(vault.mission_name, missionSize);
+      const missionSize = 26;
+      const missionWidth = fonts.timesRomanItalic.widthOfTextAtSize(vault.mission_name, missionSize);
       titlePage.drawText(vault.mission_name, {
         x: (PAGE_WIDTH - missionWidth) / 2,
         y: titleCenterY - 10,
         size: missionSize,
-        font: timesRomanItalic,
-        color: INTERIOR_TEXT,
+        font: fonts.timesRomanItalic,
+        color: COLORS.text,
       });
     }
-
-    // Service dates with em-dash
+    
     if (vault.service_start_date || vault.service_end_date) {
-      const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return '';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const formatDate = (d: string | null) => {
+        if (!d) return '';
+        return new Date(d).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       };
       const datesText = `${formatDate(vault.service_start_date)} — ${formatDate(vault.service_end_date)}`;
-      const datesWidth = timesRoman.widthOfTextAtSize(datesText, datesSize);
+      const datesSize = 21;
+      const datesWidth = fonts.timesRoman.widthOfTextAtSize(datesText, datesSize);
       titlePage.drawText(datesText, {
         x: (PAGE_WIDTH - datesWidth) / 2,
         y: titleCenterY - 50,
         size: datesSize,
-        font: timesRoman,
-        color: INTERIOR_TEXT,
+        font: fonts.timesRoman,
+        color: COLORS.text,
       });
     }
-
-    // Thin gold rule below dates
-    titlePage.drawRectangle({
-      x: PAGE_WIDTH / 2 - 100,
-      y: titleCenterY - 90,
-      width: 200,
-      height: 0.75,
-      color: GOLD_COLOR,
-    });
     
-    // Decorative star at bottom
-    drawDecorativeStar(titlePage, PAGE_WIDTH / 2, titleCenterY - 130, timesRoman);
+    titlePage.drawRectangle({ x: PAGE_WIDTH / 2 - 100, y: titleCenterY - 90, width: 200, height: 0.75, color: COLORS.gold });
+    drawDecorativeStar(titlePage, PAGE_WIDTH / 2, titleCenterY - 130, fonts.timesRoman);
 
     // ========== CONTENT PAGES ==========
-    let contentPageNumber = 1; // Start numbering from first content page
+    let contentPageNum = 1;
     
-    for (let i = 0; i < (pages?.length || 0); i++) {
-      const pageData = pages![i];
-      const contentPage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      
-      // Draw interior background
-      contentPage.drawRectangle({
-        x: 0,
-        y: 0,
-        width: PAGE_WIDTH,
-        height: PAGE_HEIGHT,
-        color: INTERIOR_BG,
-      });
-      
-      let yPosition = PAGE_HEIGHT - MARGIN - 20;
-
-      // Title - centered, bold
-      if (pageData.title) {
-        const pageTitleWidth = timesRomanBold.widthOfTextAtSize(pageData.title, contentTitleSize);
-        contentPage.drawText(pageData.title, {
-          x: (PAGE_WIDTH - pageTitleWidth) / 2,
-          y: yPosition,
-          size: contentTitleSize,
-          font: timesRomanBold,
-          color: INTERIOR_TEXT,
-        });
-        yPosition -= 30;
-      }
-
-      // Contributor attribution (italic)
+    for (const pageData of pages || []) {
+      const template = pageData.page_template || 'image_reflection';
       const authorName = profilesMap[pageData.contributor_id] || 'Anonymous';
-      const attributionText = `A memory from ${authorName}`;
-      const attributionWidth = timesRomanItalic.widthOfTextAtSize(attributionText, attributionSize);
-      contentPage.drawText(attributionText, {
-        x: (PAGE_WIDTH - attributionWidth) / 2,
-        y: yPosition,
-        size: attributionSize,
-        font: timesRomanItalic,
-        color: INTERIOR_TEXT,
-      });
-      yPosition -= 25;
-
-      // Small decorative divider
-      drawOrnamentalRule(contentPage, yPosition, PAGE_WIDTH / 2, 120, timesRoman);
-      yPosition -= 35;
-
-      // Embed images with borders
-      const imageUrls = pageData.image_urls?.length > 0 
-        ? pageData.image_urls 
-        : pageData.image_url 
-          ? [pageData.image_url] 
-          : [];
       
-      if (imageUrls.length > 0) {
-        const maxTotalWidth = PAGE_WIDTH - (MARGIN * 2);
-        const maxHeightPerImage = (imageUrls.length === 1 ? 320 : 220) * scaleFactor;
-        const gapBetweenImages = 12 * scaleFactor;
-        
-        let currentX = MARGIN;
-        const availableWidthPerImage = imageUrls.length === 1 
-          ? maxTotalWidth 
-          : (maxTotalWidth - (gapBetweenImages * (imageUrls.length - 1))) / imageUrls.length;
-
-        let maxImageHeight = 0;
-
-        for (const imageUrl of imageUrls) {
-          try {
-            const imageResponse = await fetch(imageUrl);
-            if (imageResponse.ok) {
-              const imageBytes = await imageResponse.arrayBuffer();
-              const contentType = imageResponse.headers.get('content-type') || '';
-              
-              let image;
-              if (contentType.includes('png')) {
-                image = await pdfDoc.embedPng(imageBytes);
-              } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
-                image = await pdfDoc.embedJpg(imageBytes);
-              }
-              
-              if (image) {
-                const scale = Math.min(availableWidthPerImage / image.width, maxHeightPerImage / image.height, 1);
-                const scaledWidth = image.width * scale;
-                const scaledHeight = image.height * scale;
-                
-                maxImageHeight = Math.max(maxImageHeight, scaledHeight);
-                
-                const imageY = yPosition - scaledHeight;
-                
-                // Draw subtle border around image
-                drawImageBorder(contentPage, currentX, imageY, scaledWidth, scaledHeight);
-                
-                contentPage.drawImage(image, {
-                  x: currentX,
-                  y: imageY,
-                  width: scaledWidth,
-                  height: scaledHeight,
-                });
-                
-                currentX += scaledWidth + gapBetweenImages;
-              }
-            }
-          } catch (imgError) {
-            console.error('Failed to embed image:', imgError);
-          }
-        }
-        
-        yPosition -= maxImageHeight + 25;
+      const ctx: RenderContext = { pdfDoc, fonts, authorName };
+      
+      switch (template) {
+        case 'hero_image':
+          await renderHeroImage(ctx, pageData, contentPageNum);
+          break;
+        case 'story':
+          await renderStory(ctx, pageData, contentPageNum);
+          break;
+        case 'timeline':
+          await renderTimeline(ctx, pageData, contentPageNum);
+          break;
+        default:
+          await renderImageReflection(ctx, pageData, contentPageNum);
       }
-
-      // Content text with word wrapping and improved line height
-      if (pageData.content) {
-        const words = pageData.content.split(' ');
-        let currentLine = '';
-        const maxLineWidth = PAGE_WIDTH - (MARGIN * 2);
-        const lineHeight = 22 * scaleFactor; // Slightly increased line height
-
-        for (const word of words) {
-          const testLine = currentLine ? `${currentLine} ${word}` : word;
-          const testWidth = timesRoman.widthOfTextAtSize(testLine, contentBodySize);
-          
-          if (testWidth > maxLineWidth && currentLine) {
-            contentPage.drawText(currentLine, {
-              x: MARGIN,
-              y: yPosition,
-              size: contentBodySize,
-              font: timesRoman,
-              color: INTERIOR_TEXT,
-            });
-            yPosition -= lineHeight;
-            currentLine = word;
-            
-            if (yPosition < MARGIN + 30) {
-              break;
-            }
-          } else {
-            currentLine = testLine;
-          }
-        }
-        
-        if (currentLine && yPosition >= MARGIN + 30) {
-          contentPage.drawText(currentLine, {
-            x: MARGIN,
-            y: yPosition,
-            size: contentBodySize,
-            font: timesRoman,
-            color: INTERIOR_TEXT,
-          });
-        }
-      }
-
-      // Page number in outer margin (odd pages right, even pages left)
-      const isLeftPage = contentPageNumber % 2 === 0;
-      drawPageNumber(contentPage, contentPageNumber, isLeftPage, timesRoman);
-      contentPageNumber++;
+      
+      contentPageNum++;
     }
 
     // ========== CLOSING PAGE ==========
     const closingPage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    closingPage.drawRectangle({
-      x: 0,
-      y: 0,
-      width: PAGE_WIDTH,
-      height: PAGE_HEIGHT,
-      color: INTERIOR_BG,
-    });
+    closingPage.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLORS.interiorBg });
     
     const closingCenterY = PAGE_HEIGHT / 2 + 60;
     
-    // Decorative star at top
-    drawDecorativeStar(closingPage, PAGE_WIDTH / 2, closingCenterY + 80, timesRoman);
+    drawDecorativeStar(closingPage, PAGE_WIDTH / 2, closingCenterY + 80, fonts.timesRoman);
+    drawOrnamentalRule(closingPage, closingCenterY + 40, PAGE_WIDTH / 2, 180, fonts.timesRoman);
     
-    // Ornamental rule above message
-    drawOrnamentalRule(closingPage, closingCenterY + 40, PAGE_WIDTH / 2, 180, timesRoman);
-
-    // Closing message in italic, word-wrapped and centered
-    const closingMessage = 'The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever';
-    const closingMaxWidth = PAGE_WIDTH - (MARGIN * 3);
-    const closingWords = closingMessage.split(' ');
-    let closingLine = '';
+    const closingMsg = 'The voices, moments, and messages that shape a life-changing journey have been recorded and will now last forever';
+    const closingSize = 24;
+    const closingMaxWidth = PAGE_WIDTH - MARGIN.outer * 3;
+    const closingLines = wrapText(closingMsg, fonts.timesRomanItalic, closingSize, closingMaxWidth);
     let closingY = closingCenterY - 20;
-    const closingLineHeight = 28;
+    const closingLineHeight = 36;
     
-    for (const word of closingWords) {
-      const testLine = closingLine ? `${closingLine} ${word}` : word;
-      const testWidth = timesRomanItalic.widthOfTextAtSize(testLine, closingSize);
-      
-      if (testWidth > closingMaxWidth && closingLine) {
-        const lineWidth = timesRomanItalic.widthOfTextAtSize(closingLine, closingSize);
-        closingPage.drawText(closingLine, {
-          x: (PAGE_WIDTH - lineWidth) / 2,
-          y: closingY,
-          size: closingSize,
-          font: timesRomanItalic,
-          color: INTERIOR_TEXT,
-        });
-        closingY -= closingLineHeight;
-        closingLine = word;
-      } else {
-        closingLine = testLine;
-      }
-    }
-    
-    if (closingLine) {
-      const lineWidth = timesRomanItalic.widthOfTextAtSize(closingLine, closingSize);
-      closingPage.drawText(closingLine, {
+    for (const line of closingLines) {
+      const lineWidth = fonts.timesRomanItalic.widthOfTextAtSize(line, closingSize);
+      closingPage.drawText(line, {
         x: (PAGE_WIDTH - lineWidth) / 2,
         y: closingY,
         size: closingSize,
-        font: timesRomanItalic,
-        color: INTERIOR_TEXT,
+        font: fonts.timesRomanItalic,
+        color: COLORS.text,
       });
+      closingY -= closingLineHeight;
     }
     
-    // Ornamental rule below message
-    drawOrnamentalRule(closingPage, closingY - 50, PAGE_WIDTH / 2, 180, timesRoman);
-    
-    // Decorative star at bottom
-    drawDecorativeStar(closingPage, PAGE_WIDTH / 2, closingY - 90, timesRoman);
+    drawOrnamentalRule(closingPage, closingY - 20, PAGE_WIDTH / 2, 180, fonts.timesRoman);
+    drawDecorativeStar(closingPage, PAGE_WIDTH / 2, closingY - 60, fonts.timesRoman);
 
     // ========== BACK COVER ==========
     const backCover = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    await drawCoverBackground(backCover);
+    drawCoverBackground(backCover);
 
-    // Ensure even page count by adding padding page before back cover if needed
-    const totalPages = pdfDoc.getPageCount();
-    if (totalPages % 2 !== 0) {
-      const backCoverIndex = pdfDoc.getPageCount() - 1;
-      const paddingPage = pdfDoc.insertPage(backCoverIndex, [PAGE_WIDTH, PAGE_HEIGHT]);
-      paddingPage.drawRectangle({
-        x: 0,
-        y: 0,
-        width: PAGE_WIDTH,
-        height: PAGE_HEIGHT,
-        color: INTERIOR_BG,
-      });
+    // Ensure even page count
+    if (pdfDoc.getPageCount() % 2 !== 0) {
+      const paddingPage = pdfDoc.insertPage(pdfDoc.getPageCount() - 1, [PAGE_WIDTH, PAGE_HEIGHT]);
+      paddingPage.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLORS.interiorBg });
     }
 
-    // Serialize PDF
+    // Generate PDF
     const pdfBytes = await pdfDoc.save();
-    const pdfBody = new Uint8Array(pdfBytes);
-
     const filename = `${vault.title.replace(/[^a-zA-Z0-9]/g, '-')}-memory-book.pdf`;
 
-    return new Response(pdfBody, {
+    return new Response(new Uint8Array(pdfBytes), {
       status: 200,
       headers: {
         ...corsHeaders,
