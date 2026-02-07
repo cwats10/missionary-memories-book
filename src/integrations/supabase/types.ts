@@ -63,40 +63,52 @@ export type Database = {
       }
       pages: {
         Row: {
+          caption: string | null
           content: string | null
           contributor_id: string
           created_at: string
           id: string
           image_url: string | null
           image_urls: string[] | null
+          is_signature_spread: boolean | null
           page_order: number
+          page_template: string | null
           status: string
+          timeline_data: Json | null
           title: string | null
           updated_at: string
           vault_id: string
         }
         Insert: {
+          caption?: string | null
           content?: string | null
           contributor_id: string
           created_at?: string
           id?: string
           image_url?: string | null
           image_urls?: string[] | null
+          is_signature_spread?: boolean | null
           page_order?: number
+          page_template?: string | null
           status?: string
+          timeline_data?: Json | null
           title?: string | null
           updated_at?: string
           vault_id: string
         }
         Update: {
+          caption?: string | null
           content?: string | null
           contributor_id?: string
           created_at?: string
           id?: string
           image_url?: string | null
           image_urls?: string[] | null
+          is_signature_spread?: boolean | null
           page_order?: number
+          page_template?: string | null
           status?: string
+          timeline_data?: Json | null
           title?: string | null
           updated_at?: string
           vault_id?: string

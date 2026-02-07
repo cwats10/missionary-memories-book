@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { PageTemplate, TimelineEntry } from '@/lib/pdfTemplates';
 
 export interface Page {
   id: string;
@@ -16,6 +17,11 @@ export interface Page {
   created_at: string;
   updated_at: string;
   contributor_name?: string | null;
+  // New template fields
+  page_template: PageTemplate;
+  caption: string | null;
+  is_signature_spread: boolean;
+  timeline_data: TimelineEntry[] | null;
 }
 
 export interface CreatePageInput {
@@ -24,6 +30,10 @@ export interface CreatePageInput {
   content?: string;
   image_url?: string;
   image_urls?: string[];
+  page_template?: PageTemplate;
+  caption?: string;
+  is_signature_spread?: boolean;
+  timeline_data?: TimelineEntry[];
 }
 
 export function usePages(vaultId: string | undefined) {
@@ -36,7 +46,6 @@ export function usePages(vaultId: string | undefined) {
     
     setLoading(true);
     
-    // Fetch pages first
     const { data: pagesData, error } = await supabase
       .from('pages')
       .select('*')
@@ -68,11 +77,15 @@ export function usePages(vaultId: string | undefined) {
       }
     }
 
-    // Map pages with contributor names
+    // Map pages with contributor names and ensure proper typing
     const pagesWithNames = (pagesData || []).map((page) => ({
       ...page,
       image_urls: page.image_urls || [],
       contributor_name: profilesMap[page.contributor_id] || null,
+      page_template: (page.page_template || 'image_reflection') as PageTemplate,
+      caption: page.caption || null,
+      is_signature_spread: page.is_signature_spread || false,
+      timeline_data: page.timeline_data as unknown as TimelineEntry[] | null,
     }));
     
     setPages(pagesWithNames);
@@ -88,17 +101,23 @@ export function usePages(vaultId: string | undefined) {
 
     const nextOrder = pages.length;
 
+    const insertData = {
+      vault_id: input.vault_id,
+      contributor_id: user.id,
+      title: input.title || null,
+      content: input.content || null,
+      image_url: input.image_urls?.[0] || input.image_url || null,
+      image_urls: input.image_urls || (input.image_url ? [input.image_url] : []),
+      page_order: nextOrder,
+      page_template: input.page_template || 'image_reflection',
+      caption: input.caption || null,
+      is_signature_spread: input.is_signature_spread || false,
+      timeline_data: input.timeline_data ? JSON.parse(JSON.stringify(input.timeline_data)) : null,
+    };
+
     const { data, error } = await supabase
       .from('pages')
-      .insert({
-        vault_id: input.vault_id,
-        contributor_id: user.id,
-        title: input.title || null,
-        content: input.content || null,
-        image_url: input.image_urls?.[0] || input.image_url || null,
-        image_urls: input.image_urls || (input.image_url ? [input.image_url] : []),
-        page_order: nextOrder,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -114,9 +133,14 @@ export function usePages(vaultId: string | undefined) {
   };
 
   const updatePage = async (pageId: string, updates: Partial<Page>) => {
+    // Convert timeline_data to JSON-safe format if present
+    const safeUpdates = updates.timeline_data 
+      ? { ...updates, timeline_data: JSON.parse(JSON.stringify(updates.timeline_data)) }
+      : updates;
+    
     const { error } = await supabase
       .from('pages')
-      .update(updates)
+      .update(safeUpdates as any)
       .eq('id', pageId);
 
     if (error) {
@@ -148,10 +172,8 @@ export function usePages(vaultId: string | undefined) {
   };
 
   const reorderPages = async (reorderedPages: Page[]) => {
-    // Optimistically update local state
     setPages(reorderedPages);
 
-    // Update each page's order in the database
     const updates = reorderedPages.map((page, index) => ({
       id: page.id,
       page_order: index,
@@ -166,7 +188,7 @@ export function usePages(vaultId: string | undefined) {
       if (error) {
         console.error('Error reordering pages:', error);
         toast.error('Failed to reorder pages');
-        await fetchPages(); // Revert on error
+        await fetchPages();
         return { error };
       }
     }
