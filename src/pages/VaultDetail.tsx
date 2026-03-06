@@ -19,6 +19,8 @@ import { ManagersList } from '@/components/vault/ManagersList';
 import { ContributorGuidedFlow } from '@/components/vault/ContributorGuidedFlow';
 import { ContributorWelcomeBanner } from '@/components/vault/ContributorWelcomeBanner';
 import { ShareVaultDialog } from '@/components/vault/ShareVaultDialog';
+import { VaultOwnerChecklist } from '@/components/vault/VaultOwnerChecklist';
+import { OwnerGuideSheet } from '@/components/vault/OwnerGuideSheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { BookOpen, Settings, ChevronRight } from 'lucide-react';
@@ -60,6 +62,9 @@ const VaultDetail = () => {
   const [optimizingImages, setOptimizingImages] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [showGuidedFlow, setShowGuidedFlow] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const isOwner = userRole === 'owner';
   const isManager = userRole === 'coowner';
@@ -294,36 +299,63 @@ const VaultDetail = () => {
           </nav>
 
           {/* Vault Header */}
-          <div className="mb-10">
+          <div className="mb-8">
             {canManage ? (
               <>
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                  <h1 className="font-serif text-4xl">Mission Memory Vault</h1>
-                  <span className="text-xl text-muted-foreground">{vault.recipient_name}</span>
-                  {vault.mission_name && <span className="text-muted-foreground">{vault.mission_name}</span>}
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                      <h1 className="font-serif text-4xl">Mission Memory Vault</h1>
+                      <span className="text-xl text-muted-foreground">{vault.recipient_name}</span>
+                      {vault.mission_name && <span className="text-muted-foreground">{vault.mission_name}</span>}
+                    </div>
+                    {vault.description && (
+                      <p className="text-muted-foreground mt-3 max-w-2xl">{vault.description}</p>
+                    )}
+                    {isManager && (
+                      <p className="text-sm text-primary mt-2">You are a manager of this vault</p>
+                    )}
+                  </div>
+                  {/* Guide button — owner only */}
+                  {isOwner && <OwnerGuideSheet />}
                 </div>
-                {vault.description && (
-                  <p className="text-muted-foreground mt-3 max-w-2xl">{vault.description}</p>
-                )}
-                {isManager && (
-                  <p className="text-sm text-primary mt-2">You are a manager of this vault</p>
-                )}
               </>
             ) : (
               <>
                 <h1 className="font-serif text-4xl mb-2">Contribute Your Memory</h1>
                 <p className="text-muted-foreground max-w-2xl">
-                  Add your special memories for {vault.recipient_name}. 
+                  Add your special memories for {vault.recipient_name}.
                   You can create up to {contributorPageLimit} {contributorPageLimit === 1 ? 'page' : 'pages'}.
                 </p>
               </>
             )}
           </div>
 
+          {/* Owner progress checklist */}
+          {isOwner && (
+            <VaultOwnerChecklist
+              vaultId={vault.id}
+              recipientName={vault.recipient_name}
+              totalPages={pages.length}
+              approvedPages={approvedCount}
+              vaultPurchased={vault.status === 'purchased'}
+              onShareClick={() => setShowShare(true)}
+              onPreviewClick={() => setShowPreview(true)}
+              onOrderClick={() => setShowCheckout(true)}
+            />
+          )}
+
           {/* Action Buttons - Owner and Manager */}
           {canManage && (
             <div className="flex flex-wrap justify-center gap-3 mb-10 pb-10 border-b border-border">
-              {isOwner && <ShareVaultDialog vaultId={vault.id} recipientName={vault.recipient_name} />}
+              {isOwner && (
+                <ShareVaultDialog
+                  vaultId={vault.id}
+                  recipientName={vault.recipient_name}
+                  open={showShare}
+                  onOpenChange={setShowShare}
+                />
+              )}
               <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
               {isOwner && <InviteManagerDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />}
               <BookPreview
@@ -408,7 +440,7 @@ const VaultDetail = () => {
           )}
 
           {/* Pages Section */}
-          <div className="flex items-center justify-between mb-6">
+          <div id="pages-section" className="flex items-center justify-between mb-6">
             <h2 className="font-serif text-xl">{canManage ? 'Memory Pages' : 'Your Pages'}</h2>
             <div className="flex items-center gap-4">
               {/* Status Filter Toggle - Owner and Manager */}

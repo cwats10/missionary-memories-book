@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 interface ShareVaultDialogProps {
   vaultId: string;
   recipientName: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface PermanentInvite {
@@ -26,8 +28,13 @@ interface PermanentInvite {
   uses_count: number;
 }
 
-export function ShareVaultDialog({ vaultId, recipientName }: ShareVaultDialogProps) {
-  const [open, setOpen] = useState(false);
+export function ShareVaultDialog({ vaultId, recipientName, open: controlledOpen, onOpenChange: controlledOnOpenChange }: ShareVaultDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    controlledOnOpenChange?.(v);
+  };
   const [invite, setInvite] = useState<PermanentInvite | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
