@@ -16,9 +16,12 @@ import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
 import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { ThankYouDialog } from '@/components/vault/ThankYouDialog';
 import { ManagersList } from '@/components/vault/ManagersList';
+import { ContributorGuidedFlow } from '@/components/vault/ContributorGuidedFlow';
+import { ContributorWelcomeBanner } from '@/components/vault/ContributorWelcomeBanner';
+import { ShareVaultDialog } from '@/components/vault/ShareVaultDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ArrowLeft, BookOpen, Settings, ChevronRight } from 'lucide-react';
+import { BookOpen, Settings, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -56,6 +59,7 @@ const VaultDetail = () => {
   const [pageFilter, setPageFilter] = useState<PageFilter>('all');
   const [optimizingImages, setOptimizingImages] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [showGuidedFlow, setShowGuidedFlow] = useState(false);
 
   const isOwner = userRole === 'owner';
   const isManager = userRole === 'coowner';
@@ -316,9 +320,10 @@ const VaultDetail = () => {
             )}
           </div>
 
-          {/* Action Buttons - Owner and Manager (Manager cannot download or reorder) */}
+          {/* Action Buttons - Owner and Manager */}
           {canManage && (
             <div className="flex flex-wrap justify-center gap-3 mb-10 pb-10 border-b border-border">
+              {isOwner && <ShareVaultDialog vaultId={vault.id} recipientName={vault.recipient_name} />}
               <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
               {isOwner && <InviteManagerDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />}
               <BookPreview
@@ -342,9 +347,9 @@ const VaultDetail = () => {
                 purchased={vault.status === 'purchased'}
               />
               {isOwner && (
-                <CheckoutDialog 
-                  vaultTitle="Mission Memory Vault" 
-                  pageCount={pages.length} 
+                <CheckoutDialog
+                  vaultTitle="Mission Memory Vault"
+                  pageCount={pages.length}
                   onOrderComplete={async () => {
                     const result = await updateVault({ status: 'purchased' });
                     if (!result.error) {
@@ -394,6 +399,14 @@ const VaultDetail = () => {
             </div>
           )}
 
+          {/* Contributor Welcome Banner */}
+          {isContributor && (
+            <ContributorWelcomeBanner
+              recipientName={vault.recipient_name}
+              onAddMemory={() => setShowGuidedFlow(true)}
+            />
+          )}
+
           {/* Pages Section */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-serif text-xl">{canManage ? 'Memory Pages' : 'Your Pages'}</h2>
@@ -427,7 +440,13 @@ const VaultDetail = () => {
                 </div>
               )}
               {canCreateMorePages ? (
-                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} isOwner={isOwner} />
+                isContributor ? (
+                  <Button className="gap-2" onClick={() => setShowGuidedFlow(true)}>
+                    <span>+ Add Memory</span>
+                  </Button>
+                ) : (
+                  <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} isOwner={isOwner} />
+                )
               ) : (
                 <div className="text-sm text-muted-foreground">
                   You've created {userPageCount}/{contributorPageLimit} pages
@@ -455,7 +474,7 @@ const VaultDetail = () => {
             <div className="text-center py-16 border border-dashed border-border rounded-lg">
               <BookOpen className="h-10 w-10 text-muted-foreground/50 mx-auto mb-4" />
               <h3 className="font-serif text-xl mb-2">
-                {canManage 
+                {canManage
                   ? (pageFilter === 'all' ? 'No pages yet' : `No ${pageFilter} pages`)
                   : 'No pages yet'}
               </h3>
@@ -464,10 +483,16 @@ const VaultDetail = () => {
                   ? (pageFilter === 'all'
                     ? 'Start adding memories to this vault. You can also invite friends and family to contribute.'
                     : `There are no ${pageFilter} pages to display.`)
-                  : `Add your special memory for ${vault.recipient_name}. Click the button to get started!`}
+                  : `Share a photo, write a letter, or tell a story about the impact ${vault.recipient_name} has had on your life.`}
               </p>
               {(canManage ? pageFilter === 'all' : true) && canCreateMorePages && (
-                <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} isOwner={isOwner} />
+                isContributor ? (
+                  <Button onClick={() => setShowGuidedFlow(true)} className="font-serif">
+                    Add My Memory
+                  </Button>
+                ) : (
+                  <CreatePageDialog vaultId={vault.id} vaultType={vault.vault_type} recipientName={vault.recipient_name} onCreatePage={createPage} isOwner={isOwner} />
+                )
               )}
               {(canManage ? pageFilter === 'all' : true) && !canCreateMorePages && (
                 <p className="text-sm text-muted-foreground">
@@ -477,12 +502,14 @@ const VaultDetail = () => {
             </div>
           ) : (
             <>
-              {isOwner && (
-                <p className="text-sm text-muted-foreground mb-4">Drag pages to reorder them in your book</p>
+              {(isOwner || isContributor) && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  {isOwner ? 'Drag pages to reorder them in your book' : 'Drag your pages to rearrange them'}
+                </p>
               )}
               <SortablePageList
                 pages={filteredPages}
-                onReorder={isOwner ? reorderPages : undefined}
+                onReorder={isOwner ? reorderPages : isContributor ? reorderPages : undefined}
                 onDelete={handleDeletePage}
                 onEdit={handleEditPage}
                 onApprove={approvePage}
@@ -511,6 +538,24 @@ const VaultDetail = () => {
         onOpenChange={setShowThankYou}
         recipientName={vault.recipient_name}
       />
+
+      {/* Guided Contribution Flow for Contributors */}
+      {isContributor && (
+        <ContributorGuidedFlow
+          open={showGuidedFlow}
+          onOpenChange={setShowGuidedFlow}
+          vaultId={vault.id}
+          recipientName={vault.recipient_name}
+          vaultType={vault.vault_type}
+          onCreatePage={async (input) => {
+            const result = await createPage(input);
+            if (!result.error) {
+              setShowThankYou(true);
+            }
+            return result;
+          }}
+        />
+      )}
     </div>
   );
 };

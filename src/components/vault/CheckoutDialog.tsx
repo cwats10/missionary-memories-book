@@ -5,7 +5,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { brandConfig } from '@/config/brandConfig';
-import { ShoppingCart, Check, CreditCard, Package, FileDown } from 'lucide-react';
+import { ShoppingCart, Check, CreditCard, Package, FileDown, Truck, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CheckoutDialogProps {
@@ -16,24 +16,34 @@ interface CheckoutDialogProps {
 
 export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: CheckoutDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<'select' | 'payment' | 'complete'>('select');
+  const [step, setStep] = useState<'select' | 'shipping' | 'payment' | 'complete'>('select');
   const [orderType, setOrderType] = useState<'pdf' | 'print'>('print');
   const [referralCode, setReferralCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const [shippingInfo, setShippingInfo] = useState({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: 'US',
+  });
+  const [referralGenerated] = useState(
+    'VAULT' + Math.random().toString(36).substring(2, 8).toUpperCase()
+  );
 
   const { pricing } = brandConfig;
-  
+
   const pdfPrice = pricing.pdfOnly;
   const printBasePrice = pricing.printedBase;
   const perPagePrice = pricing.perPage;
   const printTotal = printBasePrice + (pageCount * perPagePrice);
-  
+
   const selectedPrice = orderType === 'pdf' ? pdfPrice : printTotal;
   const finalPrice = Math.max(0, selectedPrice - appliedDiscount);
 
   const handleApplyCode = () => {
-    // Mock referral code validation
     if (referralCode.toUpperCase() === 'FRIEND15' || referralCode.length >= 6) {
       setAppliedDiscount(pricing.referralDiscount);
       toast.success(`$${pricing.referralDiscount} discount applied!`);
@@ -44,28 +54,29 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
 
   const handlePayment = async () => {
     setProcessing(true);
-    // Simulate payment processing
+    // Simulate API call to print-on-demand provider (e.g., Lulu Direct)
     await new Promise(resolve => setTimeout(resolve, 2000));
     setProcessing(false);
-    // Update vault status before showing completion
     await onOrderComplete?.(orderType);
     setStep('complete');
   };
 
   const handleClose = () => {
     setOpen(false);
-    // Reset state after dialog closes
     setTimeout(() => {
       setStep('select');
       setReferralCode('');
       setAppliedDiscount(0);
+      setShippingInfo({ name: '', address: '', city: '', state: '', zip: '', country: 'US' });
     }, 200);
   };
+
+  const isShippingValid = shippingInfo.name && shippingInfo.address && shippingInfo.city && shippingInfo.state && shippingInfo.zip;
 
   return (
     <Dialog open={open} onOpenChange={(o) => o ? setOpen(true) : handleClose()}>
       <DialogTrigger asChild>
-        <Button 
+        <Button
           className="gap-2 text-white hover:opacity-90"
           style={{ backgroundColor: '#2F3E36' }}
         >
@@ -73,7 +84,7 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
           Order Book
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {step === 'select' && (
           <>
             <DialogHeader>
@@ -95,7 +106,7 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
                         <span className="font-medium">Digital PDF</span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        High-resolution, print-ready file
+                        High-resolution, print-ready file — download instantly
                       </p>
                       <p className="font-serif text-xl">${pdfPrice}</p>
                     </div>
@@ -112,13 +123,17 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
                         <span className="font-medium">Printed Hardcover</span>
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Recommended</span>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Premium quality, delivered to your door
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Museum-quality hardcover, lay-flat binding, delivered to your door
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                        <Truck className="h-3 w-3" />
+                        Ships via Lulu Direct Print-on-Demand · 5–7 business days
                       </p>
                       <div className="flex items-baseline gap-2">
                         <p className="font-serif text-xl">${printTotal}</p>
                         <p className="text-sm text-muted-foreground">
-                          (${printBasePrice} + {pageCount} pages × ${perPagePrice})
+                          (${printBasePrice} base + {pageCount} pages × ${perPagePrice})
                         </p>
                       </div>
                     </div>
@@ -130,8 +145,8 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                 <Label className="text-sm font-medium mb-2 block">Have a referral code?</Label>
                 <div className="flex gap-2">
-                  <Input 
-                    placeholder="Enter code" 
+                  <Input
+                    placeholder="Enter code"
                     value={referralCode}
                     onChange={(e) => setReferralCode(e.target.value)}
                     className="flex-1"
@@ -161,9 +176,90 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
                 </div>
               </div>
 
-              <Button className="w-full mt-4" size="lg" onClick={() => setStep('payment')}>
-                Continue to Payment
+              <Button
+                className="w-full mt-4"
+                size="lg"
+                onClick={() => orderType === 'print' ? setStep('shipping') : setStep('payment')}
+              >
+                Continue
               </Button>
+            </div>
+          </>
+        )}
+
+        {step === 'shipping' && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="font-serif text-2xl">Shipping Details</DialogTitle>
+              <DialogDescription>
+                Where should we ship your hardcover book?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4 space-y-4">
+              <div>
+                <Label className="text-sm">Full Name</Label>
+                <Input
+                  placeholder="Jane Smith"
+                  value={shippingInfo.name}
+                  onChange={(e) => setShippingInfo(s => ({ ...s, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Street Address</Label>
+                <Input
+                  placeholder="123 Main St"
+                  value={shippingInfo.address}
+                  onChange={(e) => setShippingInfo(s => ({ ...s, address: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm">City</Label>
+                  <Input
+                    placeholder="Salt Lake City"
+                    value={shippingInfo.city}
+                    onChange={(e) => setShippingInfo(s => ({ ...s, city: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">State</Label>
+                  <Input
+                    placeholder="UT"
+                    value={shippingInfo.state}
+                    onChange={(e) => setShippingInfo(s => ({ ...s, state: e.target.value }))}
+                    maxLength={2}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm">ZIP Code</Label>
+                  <Input
+                    placeholder="84101"
+                    value={shippingInfo.zip}
+                    onChange={(e) => setShippingInfo(s => ({ ...s, zip: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Country</Label>
+                  <Input
+                    placeholder="US"
+                    value={shippingInfo.country}
+                    onChange={(e) => setShippingInfo(s => ({ ...s, country: e.target.value }))}
+                    maxLength={2}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" onClick={() => setStep('select')} className="flex-1">
+                  Back
+                </Button>
+                <Button onClick={() => setStep('payment')} disabled={!isShippingValid} className="flex-1">
+                  Continue to Payment
+                </Button>
+              </div>
             </div>
           </>
         )}
@@ -172,15 +268,16 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
           <>
             <DialogHeader>
               <DialogTitle className="font-serif text-2xl">Payment Details</DialogTitle>
-              <DialogDescription>
-                Sandbox mode - no real charges
+              <DialogDescription className="flex items-center gap-1">
+                <Lock className="h-3.5 w-3.5" />
+                Secure checkout — demo mode, no real charges
               </DialogDescription>
             </DialogHeader>
 
             <div className="py-4 space-y-4">
               <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  🧪 <strong>Sandbox Mode:</strong> This is a demo checkout. No payment will be processed.
+                  🧪 <strong>Demo Mode:</strong> This is a sandbox checkout. Payment will be processed via Stripe when live.
                 </p>
               </div>
 
@@ -201,13 +298,22 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
                 </div>
               </div>
 
-              <div className="py-4 border-t border-border">
-                <div className="flex justify-between mb-2">
+              {/* Order summary */}
+              <div className="py-4 border-t border-border space-y-2">
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{orderType === 'pdf' ? 'Digital PDF' : 'Printed Hardcover'}</span>
                   <span>${selectedPrice}</span>
                 </div>
+                {orderType === 'print' && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Truck className="h-3 w-3" /> Shipping (Lulu Direct)
+                    </span>
+                    <span>Included</span>
+                  </div>
+                )}
                 {appliedDiscount > 0 && (
-                  <div className="flex justify-between mb-2 text-green-600">
+                  <div className="flex justify-between text-sm text-green-600">
                     <span>Referral Discount</span>
                     <span>-${appliedDiscount}</span>
                   </div>
@@ -219,12 +325,12 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep('select')} className="flex-1">
+                <Button variant="outline" onClick={() => setStep(orderType === 'print' ? 'shipping' : 'select')} className="flex-1">
                   Back
                 </Button>
                 <Button onClick={handlePayment} disabled={processing} className="flex-1 gap-2">
                   {processing ? (
-                    <>Processing...</>
+                    <>Processing…</>
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4" />
@@ -245,19 +351,21 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
               </div>
               <DialogTitle className="font-serif text-2xl mb-2">Order Confirmed!</DialogTitle>
               <DialogDescription className="mb-6">
-                {orderType === 'pdf' 
-                  ? 'Your PDF is being prepared and will be ready for download shortly.'
-                  : 'Your hardcover book will be printed and shipped within 5-7 business days.'
-                }
+                {orderType === 'pdf'
+                  ? 'Your PDF is ready to download from the vault page.'
+                  : `Your hardcover book has been sent to Lulu Direct for printing. It will ship to ${shippingInfo.name} within 5–7 business days.`}
               </DialogDescription>
 
               <div className="p-4 bg-muted/50 rounded-lg text-left mb-6">
                 <p className="text-sm font-medium mb-1">Your Referral Code</p>
                 <div className="flex items-center gap-2">
-                  <code className="bg-background px-3 py-2 rounded border border-border font-mono">
-                    VAULT{Math.random().toString(36).substring(2, 8).toUpperCase()}
+                  <code className="bg-background px-3 py-2 rounded border border-border font-mono text-sm">
+                    {referralGenerated}
                   </code>
-                  <Button variant="ghost" size="sm" onClick={() => toast.success('Code copied!')}>
+                  <Button variant="ghost" size="sm" onClick={() => {
+                    navigator.clipboard.writeText(referralGenerated);
+                    toast.success('Code copied!');
+                  }}>
                     Copy
                   </Button>
                 </div>
