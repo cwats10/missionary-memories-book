@@ -5,12 +5,16 @@ const Pricing = () => {
   const { pricing } = brandConfig;
 
   return (
-    <section className="py-36 px-6 relative">
+    <section id="pricing" className="py-36 px-6 relative">
       {/* Subtle paper texture */}
       <div className="absolute inset-0 paper-texture pointer-events-none" />
       
       <div className="max-w-4xl mx-auto relative z-10">
-        {/* Section title with gold accent */}
+        {/* Eyebrow */}
+        <p className="font-serif-text text-gold text-xs tracking-[0.25em] uppercase text-center mb-5">
+          Investment
+        </p>
+
         <h2 className="font-serif text-3xl md:text-4xl text-center mb-4 tracking-wide">
           Simple, Transparent Pricing
         </h2>

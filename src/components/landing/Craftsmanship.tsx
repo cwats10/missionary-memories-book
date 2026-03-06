@@ -20,9 +20,13 @@ const Craftsmanship = () => {
   return (
     <section className="py-36 px-6 bg-card">
       <div className="max-w-5xl mx-auto">
-        {/* Section title with gold accent */}
+        {/* Eyebrow */}
+        <p className="font-serif-text text-gold text-xs tracking-[0.25em] uppercase text-center mb-5">
+          Archival Quality
+        </p>
+
         <h2 className="font-serif text-3xl md:text-4xl text-center mb-4 tracking-wide">
-          Built to Last
+          Built to Last Generations
         </h2>
         
         <div className="flex justify-center mb-8">
