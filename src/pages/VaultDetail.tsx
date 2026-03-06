@@ -516,7 +516,7 @@ const VaultDetail = () => {
                       {/* Fulfillment progress */}
                       <div className="flex items-center gap-3 mt-3 font-serif-text text-xs">
                         {stages.map((s, i) => {
-                          const done = stages.indexOf(vault.status as typeof stages[number]) >= i;
+                          const done = stages.indexOf(vault.status as any) >= i;
                           return (
                             <div key={s} className="flex items-center gap-3">
                               <div className={cn('flex items-center gap-1.5',

@@ -91,9 +91,9 @@ function Feature({
   );
 }
 
-function Tip({ children }: { children: React.ReactNode }) {
+function Tip({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="flex items-start gap-2.5 px-3.5 py-3 bg-gold/5 border border-gold/20 rounded-lg">
+    <div className={cn("flex items-start gap-2.5 px-3.5 py-3 bg-gold/5 border border-gold/20 rounded-lg", className)}>
       <span className="text-gold text-sm flex-shrink-0 mt-0.5">✦</span>
       <p className="font-serif-text text-xs text-muted-foreground italic leading-relaxed">{children}</p>
     </div>

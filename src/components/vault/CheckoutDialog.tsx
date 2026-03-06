@@ -126,7 +126,7 @@ export const CheckoutDialog = ({
               </DialogTitle>
               <DialogDescription>
                 {isActivate
-                  ? 'Choose your book format and pay to unlock sharing. You'll provide shipping details when you submit the finished book.'
+                  ? "Choose your book format and pay to unlock sharing. You'll provide shipping details when you submit the finished book."
                   : `Choose your preferred format for "${vaultTitle}"`}
               </DialogDescription>
             </DialogHeader>
