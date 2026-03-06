@@ -21,9 +21,11 @@ import { ContributorWelcomeBanner } from '@/components/vault/ContributorWelcomeB
 import { ShareVaultDialog } from '@/components/vault/ShareVaultDialog';
 import { VaultOwnerChecklist } from '@/components/vault/VaultOwnerChecklist';
 import { OwnerGuideSheet } from '@/components/vault/OwnerGuideSheet';
+import { ContributorRemindersDialog } from '@/components/vault/ContributorRemindersDialog';
+import { SubmitBookDialog } from '@/components/vault/SubmitBookDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { BookOpen, Settings, ChevronRight } from 'lucide-react';
+import { BookOpen, Settings, ChevronRight, Lock, CheckCircle2, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -230,6 +232,14 @@ const VaultDetail = () => {
     }
   };
 
+  const handleSubmitBook = async () => {
+    const result = await updateVault({ status: 'submitted' });
+    if (!result.error) {
+      await refetchVault();
+    }
+    return result as { error: Error | null };
+  };
+
   const handleSavePage = async (pageId: string, updates: Partial<Page>) => {
     const result = await updatePage(pageId, updates);
     if (!result.error) {
@@ -338,26 +348,172 @@ const VaultDetail = () => {
               recipientName={vault.recipient_name}
               totalPages={pages.length}
               approvedPages={approvedCount}
-              vaultPurchased={vault.status === 'purchased'}
+              vaultPurchased={vault.status !== 'draft'}
               onShareClick={() => setShowShare(true)}
               onPreviewClick={() => setShowPreview(true)}
               onOrderClick={() => setShowCheckout(true)}
             />
           )}
 
-          {/* Action Buttons - Owner and Manager */}
-          {canManage && (
-            <div className="flex flex-wrap justify-center gap-3 mb-10 pb-10 border-b border-border">
-              {isOwner && (
-                <ShareVaultDialog
-                  vaultId={vault.id}
-                  recipientName={vault.recipient_name}
-                  open={showShare}
-                  onOpenChange={setShowShare}
-                />
+          {/* ─── OWNER WORKFLOW SECTIONS ──────────────────────────────── */}
+          {isOwner && (
+            <>
+              {/* STATE 1: DRAFT — vault not yet activated/paid */}
+              {vault.status === 'draft' && (
+                <div className="mb-10 pb-10 border-b border-border">
+                  <div className="rounded-xl border-2 border-dashed border-gold/30 bg-gold/5 p-7 text-center max-w-lg mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center mx-auto mb-4">
+                      <Lock className="h-5 w-5 text-gold" />
+                    </div>
+                    <h2 className="font-serif text-xl mb-2">Activate Your Vault</h2>
+                    <p className="font-serif-text text-sm text-muted-foreground mb-6 leading-relaxed">
+                      Choose your book format and pay to unlock sharing. Once activated,
+                      you can invite contributors and start collecting memories for {vault.recipient_name}.
+                    </p>
+                    <CheckoutDialog
+                      vaultTitle={vault.recipient_name}
+                      pageCount={pages.length}
+                      mode="activate"
+                      onOrderComplete={async () => {
+                        const result = await updateVault({ status: 'purchased' });
+                        if (!result.error) await refetchVault();
+                      }}
+                    />
+                    <p className="font-serif-text text-xs text-muted-foreground mt-4">
+                      Your book format selection is locked in at activation. Contributions and page management are available immediately after.
+                    </p>
+                  </div>
+                </div>
               )}
+
+              {/* STATE 2: ACTIVE (purchased) — collecting contributions */}
+              {vault.status === 'purchased' && (
+                <div className="mb-10 pb-10 border-b border-border space-y-6">
+                  {/* Sharing row */}
+                  <div>
+                    <p className="font-serif-text text-xs text-muted-foreground uppercase tracking-widest mb-3">
+                      Share &amp; Invite
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <ShareVaultDialog
+                        vaultId={vault.id}
+                        recipientName={vault.recipient_name}
+                        open={showShare}
+                        onOpenChange={setShowShare}
+                      />
+                      <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
+                      <InviteManagerDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
+                      <ContributorRemindersDialog
+                        vaultId={vault.id}
+                        recipientName={vault.recipient_name}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Finalize row */}
+                  <div>
+                    <p className="font-serif-text text-xs text-muted-foreground uppercase tracking-widest mb-3">
+                      Finalize &amp; Submit
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <BookPreview
+                        recipientName={vault.recipient_name}
+                        missionName={vault.mission_name}
+                        serviceStartDate={vault.service_start_date}
+                        serviceEndDate={vault.service_end_date}
+                        pages={pages}
+                        vaultType={vault.vault_type}
+                      />
+                      <DownloadPdfButton
+                        vaultId={vault.id}
+                        disabled={pages.length === 0 || approvedCount === 0}
+                        disabledReason={
+                          pages.length === 0
+                            ? 'Add at least one page to enable PDF download'
+                            : approvedCount === 0
+                              ? 'Approve at least one page to enable PDF download'
+                              : undefined
+                        }
+                        purchased={true}
+                      />
+                      <SubmitBookDialog
+                        vaultId={vault.id}
+                        approvedPageCount={approvedCount}
+                        orderType={null}
+                        disabled={approvedCount === 0}
+                        disabledReason="Approve at least one page before submitting"
+                        onSubmit={handleSubmitBook}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STATE 3: SUBMITTED / IN PRODUCTION / SHIPPED */}
+              {['submitted', 'in_production', 'shipped'].includes(vault.status) && (
+                <div className="mb-10 pb-10 border-b border-border">
+                  <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-6 flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                      {vault.status === 'shipped' ? (
+                        <Package className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-serif text-base mb-1">
+                        {vault.status === 'submitted' && 'Book Submitted for Printing'}
+                        {vault.status === 'in_production' && 'Book In Production'}
+                        {vault.status === 'shipped' && 'Book Shipped!'}
+                      </h3>
+                      <p className="font-serif-text text-sm text-muted-foreground leading-relaxed">
+                        {vault.status === 'submitted' && 'Your book is in the fulfillment queue. The admin team will update the status as it moves through production.'}
+                        {vault.status === 'in_production' && 'Your book is being printed. You'll receive an update when it ships.'}
+                        {vault.status === 'shipped' && 'Your book is on its way! Check your email for tracking information.'}
+                      </p>
+                      {/* Fulfillment progress */}
+                      <div className="flex items-center gap-3 mt-3 font-serif-text text-xs">
+                        {[['submitted', 'Submitted'], ['in_production', 'Printing'], ['shipped', 'Shipped']].map(([s, label], i, arr) => {
+                          const statuses = ['submitted', 'in_production', 'shipped'];
+                          const done = statuses.indexOf(vault.status) >= statuses.indexOf(s);
+                          return (
+                            <div key={s} className="flex items-center gap-3">
+                              <div className={cn('flex items-center gap-1.5', done ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground/50')}>
+                                <div className={cn('w-2 h-2 rounded-full', done ? 'bg-green-600' : 'bg-muted-foreground/30')} />
+                                {label}
+                              </div>
+                              {i < arr.length - 1 && <div className="w-6 h-px bg-border" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Still allow preview + download for reference */}
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    <BookPreview
+                      recipientName={vault.recipient_name}
+                      missionName={vault.mission_name}
+                      serviceStartDate={vault.service_start_date}
+                      serviceEndDate={vault.service_end_date}
+                      pages={pages}
+                      vaultType={vault.vault_type}
+                    />
+                    <DownloadPdfButton
+                      vaultId={vault.id}
+                      disabled={approvedCount === 0}
+                      purchased={true}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Manager action buttons (not owners — owners use workflow above) */}
+          {isManager && (
+            <div className="flex flex-wrap gap-3 mb-10 pb-10 border-b border-border">
               <InviteDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />
-              {isOwner && <InviteManagerDialog vaultId={vault.id} vaultTitle="Mission Memory Vault" />}
               <BookPreview
                 recipientName={vault.recipient_name}
                 missionName={vault.mission_name}
@@ -368,28 +524,9 @@ const VaultDetail = () => {
               />
               <DownloadPdfButton
                 vaultId={vault.id}
-                disabled={pages.length === 0 || approvedCount === 0}
-                disabledReason={
-                  pages.length === 0
-                    ? 'Add at least one page to enable PDF download'
-                    : approvedCount === 0
-                      ? 'Approve at least one page to enable PDF download'
-                      : undefined
-                }
-                purchased={vault.status === 'purchased'}
+                disabled={approvedCount === 0}
+                purchased={vault.status !== 'draft'}
               />
-              {isOwner && (
-                <CheckoutDialog
-                  vaultTitle="Mission Memory Vault"
-                  pageCount={pages.length}
-                  onOrderComplete={async () => {
-                    const result = await updateVault({ status: 'purchased' });
-                    if (!result.error) {
-                      await refetchVault();
-                    }
-                  }}
-                />
-              )}
             </div>
           )}
 

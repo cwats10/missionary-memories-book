@@ -12,9 +12,12 @@ interface CheckoutDialogProps {
   vaultTitle: string;
   pageCount: number;
   onOrderComplete?: (orderType: 'pdf' | 'print') => void;
+  /** When true: trigger says "Activate Vault", success messaging reflects activation */
+  mode?: 'activate' | 'order';
 }
 
-export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: CheckoutDialogProps) => {
+export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 'order' }: CheckoutDialogProps) => {
+  const isActivate = mode === 'activate';
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'select' | 'shipping' | 'payment' | 'complete'>('select');
   const [orderType, setOrderType] = useState<'pdf' | 'print'>('print');
@@ -77,20 +80,34 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
     <Dialog open={open} onOpenChange={(o) => o ? setOpen(true) : handleClose()}>
       <DialogTrigger asChild>
         <Button
-          className="gap-2 text-white hover:opacity-90"
+          size="lg"
+          className="gap-2 text-white hover:opacity-90 w-full sm:w-auto"
           style={{ backgroundColor: '#2F3E36' }}
         >
-          <ShoppingCart className="h-4 w-4" />
-          Order Book
+          {isActivate ? (
+            <>
+              <Lock className="h-4 w-4" />
+              Activate Vault &amp; Pay
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="h-4 w-4" />
+              Order Book
+            </>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {step === 'select' && (
           <>
             <DialogHeader>
-              <DialogTitle className="font-serif text-2xl">Order Your Book</DialogTitle>
+              <DialogTitle className="font-serif text-2xl">
+                {isActivate ? 'Activate Your Vault' : 'Order Your Book'}
+              </DialogTitle>
               <DialogDescription>
-                Choose your preferred format for "{vaultTitle}"
+                {isActivate
+                  ? 'Choose your book format and pay to unlock sharing. You can collect contributions once activated.'
+                  : `Choose your preferred format for "${vaultTitle}"`}
               </DialogDescription>
             </DialogHeader>
 
@@ -349,11 +366,15 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete }: Check
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Check className="h-8 w-8 text-green-600" />
               </div>
-              <DialogTitle className="font-serif text-2xl mb-2">Order Confirmed!</DialogTitle>
+              <DialogTitle className="font-serif text-2xl mb-2">
+                {isActivate ? 'Vault Activated!' : 'Order Confirmed!'}
+              </DialogTitle>
               <DialogDescription className="mb-6">
-                {orderType === 'pdf'
-                  ? 'Your PDF is ready to download from the vault page.'
-                  : `Your hardcover book has been sent to Lulu Direct for printing. It will ship to ${shippingInfo.name} within 5–7 business days.`}
+                {isActivate
+                  ? 'Your vault is active. Share your invite link to start collecting memories.'
+                  : orderType === 'pdf'
+                    ? 'Your PDF is ready to download from the vault page.'
+                    : `Your hardcover book has been sent to Lulu Direct for printing. It will ship to ${shippingInfo.name} within 5–7 business days.`}
               </DialogDescription>
 
               <div className="p-4 bg-muted/50 rounded-lg text-left mb-6">

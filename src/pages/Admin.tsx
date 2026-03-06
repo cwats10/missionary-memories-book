@@ -14,7 +14,7 @@ type AdminTab = 'users' | 'vaults' | 'tickets';
 const Admin = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { isAdmin, loading: adminLoading, users, vaults, tickets, exportUsersToCSV, updateUserRole, updateTicket, fetchUsers, fetchVaults, fetchTickets } = useAdmin();
+  const { isAdmin, loading: adminLoading, users, vaults, tickets, exportUsersToCSV, updateUserRole, updateTicket, updateVaultStatus, fetchUsers, fetchVaults, fetchTickets } = useAdmin();
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
 
   if (authLoading || adminLoading) {
@@ -35,7 +35,7 @@ const Admin = () => {
 
   const tabs: { key: AdminTab; label: string; icon: typeof Users; count: number }[] = [
     { key: 'users', label: 'Users', icon: Users, count: users.length },
-    { key: 'vaults', label: 'Vaults', icon: BookOpen, count: vaults.length },
+    { key: 'vaults', label: 'Vaults', icon: BookOpen, count: vaults.filter(v => ['submitted', 'in_production'].includes(v.status)).length || vaults.length },
     { key: 'tickets', label: 'Support Tickets', icon: MessageSquare, count: tickets.filter(t => t.status === 'open').length },
   ];
 
@@ -112,9 +112,10 @@ const Admin = () => {
             />
           )}
           {activeTab === 'vaults' && (
-            <AdminVaultsTab 
+            <AdminVaultsTab
               vaults={vaults}
               onRefresh={fetchVaults}
+              onUpdateVaultStatus={updateVaultStatus}
             />
           )}
           {activeTab === 'tickets' && (
