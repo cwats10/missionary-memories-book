@@ -38,23 +38,23 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-10 relative z-10">
 
         {/* ── Upper footer: brand + nav ───────────────────── */}
-        <div className="py-16 lg:py-20 grid lg:grid-cols-12 gap-12">
+        <div className="py-16 lg:py-20 flex flex-col items-center text-center gap-12">
 
-          {/* Brand column — 5 cols */}
-          <div className="lg:col-span-5">
-            <GoldDivider variant="diamond" className="mb-8 max-w-[140px]" />
+          {/* Brand column */}
+          <div>
+            <GoldDivider variant="diamond" className="mb-8 max-w-[140px] mx-auto" />
 
             <p className="font-serif text-2xl tracking-wide text-foreground mb-4">
               {brandConfig.name}
               <sup className="font-serif-text text-gold/60 text-[0.4em] ml-0.5 tracking-normal">™</sup>
             </p>
 
-            <p className="font-serif-text text-muted-foreground text-sm leading-relaxed max-w-xs mb-8 italic">
+            <p className="font-serif-text text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto mb-8 italic">
               {brandConfig.tagline}
             </p>
 
             {/* Essence words */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
               {brandConfig.essence.map((word) => (
                 <span
                   key={word}
@@ -66,8 +66,8 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Nav columns — 7 cols total */}
-          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
+          {/* Nav columns */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
             {navColumns.map((col) => (
               <div key={col.heading}>
                 <p className="font-serif-text text-[10px] tracking-[0.25em] uppercase text-gold/70 mb-5">
@@ -91,16 +91,16 @@ const Footer = () => {
         </div>
 
         {/* ── Bottom bar ──────────────────────────────────── */}
-        <div className="border-t border-gold/15 py-7 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-serif-text text-xs text-muted-foreground/60">
-            © {year} {brandConfig.name}{brandConfig.trademark}. All rights reserved.
-          </p>
-
+        <div className="border-t border-gold/15 py-7 flex flex-col items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="h-px w-6 bg-gold/25" />
             <span className="text-gold/40 text-[8px]">◆</span>
             <div className="h-px w-6 bg-gold/25" />
           </div>
+
+          <p className="font-serif-text text-xs text-muted-foreground/60">
+            © {year} {brandConfig.name}{brandConfig.trademark}. All rights reserved.
+          </p>
 
           <p className="font-serif-text text-xs text-muted-foreground/40 italic">
             Heirloom quality, printed on demand.
