@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,8 @@ interface SubmitBookDialogProps {
   orderFormat: OrderFormat | null;
   disabled?: boolean;
   disabledReason?: string;
+  triggerLabel?: string;
+  triggerIcon?: ReactNode;
   onSubmit: (status: string) => Promise<{ error: Error | null }>;
 }
 
@@ -149,6 +151,8 @@ export function SubmitBookDialog({
   orderFormat,
   disabled,
   disabledReason,
+  triggerLabel,
+  triggerIcon,
   onSubmit,
 }: SubmitBookDialogProps) {
   const [open, setOpen] = useState(false);
@@ -232,7 +236,12 @@ export function SubmitBookDialog({
               : 'bg-[#2F3E36] hover:bg-[#2F3E36]',
           )}
         >
-          {orderFormat === 'heirloom' ? (
+          {triggerLabel ? (
+            <>
+              {triggerIcon}
+              {triggerLabel}
+            </>
+          ) : orderFormat === 'heirloom' ? (
             <>
               <Gem className="h-4 w-4" />
               Submit Heirloom Book

@@ -49,7 +49,7 @@ const Hero = () => {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 animate-fade-up-delay-3 mb-12">
+          <div className="flex flex-col sm:flex-row gap-3 animate-fade-up-delay-3 mb-4">
             <a
               href="/auth?mode=signup"
               className="inline-flex items-center justify-center gap-2 px-7 py-4 bg-primary text-primary-foreground font-serif-text text-sm tracking-[0.08em] rounded transition-all duration-300 hover:opacity-90 hover:scale-[1.02] shadow-elegant"
@@ -62,6 +62,15 @@ const Hero = () => {
               className="inline-flex items-center justify-center px-7 py-4 border border-foreground/20 text-foreground font-serif-text text-sm tracking-[0.08em] rounded transition-all duration-300 hover:border-gold/50 hover:bg-gold/5"
             >
               Access Your Vault
+            </a>
+          </div>
+          <div className="mb-10 animate-fade-up-delay-3">
+            <a
+              href="/demo"
+              className="inline-flex items-center gap-1.5 font-serif-text text-xs text-gold/70 hover:text-gold transition-colors tracking-wide"
+            >
+              <span className="text-[9px]">◆</span>
+              See a sample finished book →
             </a>
           </div>
 

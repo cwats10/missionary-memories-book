@@ -22,6 +22,8 @@ import {
   Lock,
   Gem,
   Info,
+  Gift,
+  CalendarClock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -52,6 +54,11 @@ export const CheckoutDialog = ({
   const [referralGenerated] = useState(
     'VAULT' + Math.random().toString(36).substring(2, 8).toUpperCase()
   );
+  // Gift purchase
+  const [isGift, setIsGift] = useState(false);
+  const [giftRecipientEmail, setGiftRecipientEmail] = useState('');
+  // Payment plan (heirloom only)
+  const [usePaymentPlan, setUsePaymentPlan] = useState(false);
 
   const { pricing } = brandConfig;
 
@@ -85,12 +92,17 @@ export const CheckoutDialog = ({
     setStep('complete');
   };
 
+  const splitPayment = Math.ceil(finalPrice / 2);
+
   const handleClose = () => {
     setOpen(false);
     setTimeout(() => {
       setStep('select');
       setReferralCode('');
       setAppliedDiscount(0);
+      setIsGift(false);
+      setGiftRecipientEmail('');
+      setUsePaymentPlan(false);
     }, 200);
   };
 
@@ -132,9 +144,35 @@ export const CheckoutDialog = ({
             </DialogHeader>
 
             <div className="py-4 space-y-3">
+              {/* Gift toggle */}
+              <button
+                type="button"
+                onClick={() => setIsGift((g) => !g)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
+                  isGift ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
+                }`}
+              >
+                <Gift className={`h-4 w-4 flex-shrink-0 ${isGift ? 'text-primary' : 'text-muted-foreground'}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{isGift ? 'Buying as a gift ✓' : 'Buying as a gift?'}</p>
+                  <p className="text-xs text-muted-foreground">Fulfillment notifications go to the recipient</p>
+                </div>
+              </button>
+              {isGift && (
+                <div>
+                  <Label className="text-sm mb-1.5 block">Recipient email</Label>
+                  <Input
+                    type="email"
+                    placeholder="recipient@email.com"
+                    value={giftRecipientEmail}
+                    onChange={(e) => setGiftRecipientEmail(e.target.value)}
+                  />
+                </div>
+              )}
+
               <RadioGroup
                 value={orderType}
-                onValueChange={(v) => setOrderType(v as OrderFormat)}
+                onValueChange={(v) => { setOrderType(v as OrderFormat); setUsePaymentPlan(false); }}
                 className="space-y-3"
               >
                 {/* PDF */}
@@ -229,6 +267,31 @@ export const CheckoutDialog = ({
                 </div>
               </RadioGroup>
 
+              {/* Payment plan — heirloom only */}
+              {orderType === 'heirloom' && (
+                <button
+                  type="button"
+                  onClick={() => setUsePaymentPlan((p) => !p)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
+                    usePaymentPlan ? 'border-gold bg-gold/5' : 'border-border hover:border-gold/30'
+                  }`}
+                >
+                  <CalendarClock className={`h-4 w-4 flex-shrink-0 ${usePaymentPlan ? 'text-gold' : 'text-muted-foreground'}`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {usePaymentPlan
+                        ? `Pay in 2 installments ✓ — $${splitPayment} today`
+                        : 'Pay in 2 installments'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {usePaymentPlan
+                        ? `$${splitPayment} remaining collected before your book ships`
+                        : `Reserve your Heirloom Edition for $${Math.ceil(heirloomTotal / 2)} now, $${Math.ceil(heirloomTotal / 2)} before shipping`}
+                    </p>
+                  </div>
+                </button>
+              )}
+
               {/* Referral Code */}
               <div className="mt-2 p-4 bg-muted/50 rounded-lg">
                 <Label className="text-sm font-medium mb-2 block">Have a referral code?</Label>
@@ -253,14 +316,21 @@ export const CheckoutDialog = ({
 
               {/* Total */}
               <div className="flex justify-between items-center py-4 border-t border-border">
-                <span className="font-medium">Total due today</span>
+                <div>
+                  <span className="font-medium">Total due today</span>
+                  {usePaymentPlan && orderType === 'heirloom' && (
+                    <p className="text-xs text-muted-foreground">2nd payment of ${splitPayment} collected before shipping</p>
+                  )}
+                </div>
                 <div className="text-right">
                   {appliedDiscount > 0 && (
                     <span className="text-sm text-muted-foreground line-through mr-2">
                       ${selectedPrice}
                     </span>
                   )}
-                  <span className="font-serif text-2xl">${finalPrice}</span>
+                  <span className="font-serif text-2xl">
+                    ${usePaymentPlan && orderType === 'heirloom' ? splitPayment : finalPrice}
+                  </span>
                 </div>
               </div>
 
@@ -355,7 +425,7 @@ export const CheckoutDialog = ({
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4" />
-                      Pay ${finalPrice}
+                      Pay ${usePaymentPlan && orderType === 'heirloom' ? splitPayment : finalPrice}
                     </>
                   )}
                 </Button>

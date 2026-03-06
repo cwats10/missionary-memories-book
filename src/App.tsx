@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import VaultDetail from "./pages/VaultDetail";
 import AcceptInvite from "./pages/AcceptInvite";
 import Admin from "./pages/Admin";
+import SampleVault from "./pages/SampleVault";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => {
               <Route path="/vault/:id" element={<VaultDetail />} />
               <Route path="/invite/:code" element={<AcceptInvite />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/demo" element={<SampleVault />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

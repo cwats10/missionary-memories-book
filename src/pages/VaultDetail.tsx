@@ -24,9 +24,10 @@ import { VaultOwnerChecklist } from '@/components/vault/VaultOwnerChecklist';
 import { OwnerGuideSheet } from '@/components/vault/OwnerGuideSheet';
 import { ContributorRemindersDialog } from '@/components/vault/ContributorRemindersDialog';
 import { SubmitBookDialog } from '@/components/vault/SubmitBookDialog';
+import { MissionCountdown } from '@/components/vault/MissionCountdown';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { BookOpen, Settings, ChevronRight, Lock, CheckCircle2, Package, Gem } from 'lucide-react';
+import { BookOpen, Settings, ChevronRight, Lock, CheckCircle2, Package, Gem, Users, Bell, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -121,6 +122,21 @@ const VaultDetail = () => {
     () => visiblePages.filter((p) => p.status === 'draft' || p.status === 'submitted').length,
     [visiblePages]
   );
+
+  // #1 Social proof: unique contributors (excluding owner)
+  const uniqueContributorCount = useMemo(() => {
+    const ids = new Set(pages.map((p) => p.contributor_id).filter(Boolean));
+    return ids.size;
+  }, [pages]);
+
+  // #8 Auto-reminder: dismiss key per vault
+  const reminderDismissKey = id ? `reminder-dismissed-${id}` : null;
+  const showReadyToSubmitReminder =
+    isOwner &&
+    (vault?.status === 'purchased' || vault?.status === 'purchased_heirloom') &&
+    pages.length >= 10 &&
+    reminderDismissKey !== null &&
+    !localStorage.getItem(reminderDismissKey);
 
   const needsImageOptimization = useMemo(() => {
     return pages.some((p) => {
@@ -403,6 +419,16 @@ const VaultDetail = () => {
                     <p className="font-serif-text text-xs text-muted-foreground mt-4">
                       Your book format selection is locked in at activation. Contributions and page management are available immediately after.
                     </p>
+                    {/* #3 Pre-purchase preview link */}
+                    <a
+                      href="/demo"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 font-serif-text text-xs text-gold/70 hover:text-gold transition-colors mt-2"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                      See a sample finished book →
+                    </a>
                   </div>
                 </div>
               )}
@@ -410,11 +436,42 @@ const VaultDetail = () => {
               {/* STATE 2: ACTIVE (purchased / purchased_heirloom) — collecting contributions */}
               {(vault.status === 'purchased' || vault.status === 'purchased_heirloom') && (
                 <div className="mb-10 pb-10 border-b border-border space-y-6">
+                  {/* #8 Auto-reminder banner */}
+                  {showReadyToSubmitReminder && (
+                    <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-lg">
+                      <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-serif-text text-sm font-medium text-amber-900 dark:text-amber-200">
+                          Your book is ready to submit
+                        </p>
+                        <p className="font-serif-text text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                          You have {pages.length} contributions — that's enough for a beautiful book. Review your pages and submit for printing.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="text-amber-600/60 hover:text-amber-600 text-xs font-serif-text flex-shrink-0"
+                        onClick={() => { if (reminderDismissKey) localStorage.setItem(reminderDismissKey, '1'); }}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  )}
+
                   {/* Sharing row */}
                   <div>
-                    <p className="font-serif-text text-xs text-muted-foreground uppercase tracking-widest mb-3">
-                      Share &amp; Invite
-                    </p>
+                    {/* #1 Social proof */}
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-serif-text text-xs text-muted-foreground uppercase tracking-widest">
+                        Share &amp; Invite
+                      </p>
+                      {uniqueContributorCount > 0 && (
+                        <span className="flex items-center gap-1.5 font-serif-text text-xs text-primary/70">
+                          <Users className="h-3 w-3" />
+                          {uniqueContributorCount} {uniqueContributorCount === 1 ? 'contributor' : 'contributors'} so far
+                        </span>
+                      )}
+                    </div>
                     <div className="flex flex-wrap gap-3">
                       <ShareVaultDialog
                         vaultId={vault.id}
@@ -433,9 +490,16 @@ const VaultDetail = () => {
 
                   {/* Finalize row */}
                   <div>
-                    <p className="font-serif-text text-xs text-muted-foreground uppercase tracking-widest mb-3">
-                      Finalize &amp; Submit
-                    </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-serif-text text-xs text-muted-foreground uppercase tracking-widest">
+                        Finalize &amp; Submit
+                      </p>
+                      {/* #2 Mission countdown */}
+                      {vault.vault_type === 'farewell'
+                        ? <MissionCountdown date={vault.service_start_date} label="Departure" />
+                        : <MissionCountdown date={vault.service_end_date} label="Return date" />
+                      }
+                    </div>
                     <div className="flex flex-wrap gap-3">
                       <BookPreview
                         recipientName={vault.recipient_name}
@@ -553,6 +617,18 @@ const VaultDetail = () => {
                       disabled={approvedCount === 0}
                       purchased={true}
                     />
+                    {/* #10 One-click reorder for shipped/delivered */}
+                    {(vault.status === 'shipped' || vault.status === 'delivered') && (
+                      <SubmitBookDialog
+                        vaultId={vault.id}
+                        approvedPageCount={approvedCount}
+                        orderFormat={orderFormat}
+                        disabled={approvedCount === 0}
+                        onSubmit={handleSubmitBook}
+                        triggerLabel="Order Another Copy"
+                        triggerIcon={<RotateCcw className="h-4 w-4" />}
+                      />
+                    )}
                   </div>
                 </div>
                 );
@@ -766,6 +842,7 @@ const VaultDetail = () => {
           vaultId={vault.id}
           recipientName={vault.recipient_name}
           vaultType={vault.vault_type}
+          contributorCount={uniqueContributorCount}
           onCreatePage={async (input) => {
             const result = await createPage(input);
             if (!result.error) {

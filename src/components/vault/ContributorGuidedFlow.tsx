@@ -22,6 +22,7 @@ interface ContributorGuidedFlowProps {
   vaultId: string;
   recipientName: string;
   vaultType: string;
+  contributorCount?: number;
   onCreatePage: (input: CreatePageInput) => Promise<{ error?: Error | null }>;
 }
 
@@ -94,6 +95,7 @@ export function ContributorGuidedFlow({
   vaultId,
   recipientName,
   vaultType,
+  contributorCount,
   onCreatePage,
 }: ContributorGuidedFlowProps) {
   const [step, setStep] = useState<Step>('type');
@@ -194,6 +196,17 @@ export function ContributorGuidedFlow({
             </DialogHeader>
 
             <div className="py-6 space-y-3">
+              {typeof contributorCount === 'number' && contributorCount > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-primary/5 border border-primary/15 rounded-lg text-sm text-primary/80 font-serif-text">
+                  <Heart className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>
+                    {contributorCount === 1
+                      ? '1 person has already contributed to this book.'
+                      : `${contributorCount} people have already contributed to this book.`}
+                    {' '}Add yours to make it complete.
+                  </span>
+                </div>
+              )}
               {CONTRIBUTION_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
