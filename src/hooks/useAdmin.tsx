@@ -272,6 +272,23 @@ export const useAdmin = () => {
     return true;
   };
 
+  // Update a vault's fulfillment status (admin only)
+  const updateVaultStatus = async (vaultId: string, status: string) => {
+    const { error } = await supabase
+      .from('vaults')
+      .update({ status })
+      .eq('id', vaultId);
+
+    if (error) {
+      toast.error('Failed to update vault status');
+      return false;
+    }
+
+    toast.success('Vault status updated');
+    await fetchVaults();
+    return true;
+  };
+
   // Delete user (remove from profiles - cascades)
   const deleteUser = async (userId: string) => {
     // Note: This requires admin to have delete permissions or use service role
@@ -327,6 +344,7 @@ export const useAdmin = () => {
     fetchTickets,
     updateUserRole,
     updateTicket,
+    updateVaultStatus,
     deleteUser,
     exportUsersToCSV,
   };

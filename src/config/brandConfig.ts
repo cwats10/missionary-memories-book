@@ -98,13 +98,46 @@ export const brandConfig = {
 
   // === PRICING ===
   pricing: {
+    // Digital PDF
     pdfOnly: 40,
-    printedBase: 60,
-    perPage: 1,
+    // Standard Print — fulfilled automatically via Prodigi
+    printedBase: 149,
+    perPage: 0,
+    // Heirloom Edition — fulfilled manually via Printique, hand-delivered
+    heirloomBase: 449,
+    heirloomPerPage: 0,
+    // Referral program
     referralDiscount: 15,
     referralCredit: 15,
     maxReferralCredits: 120,
     maxReferrals: 8
+  },
+
+  // === PRODIGI PRINT API ===
+  // Standard print orders are submitted automatically to Prodigi.
+  // Set PRODIGI_API_KEY as a Supabase edge function secret.
+  // Set PRODIGI_USE_SANDBOX=true in edge function env for testing.
+  // Verify your book SKU in your Prodigi dashboard product catalog —
+  // the largest square hardcover they currently offer is ~21×21 cm (8.3×8.3").
+  // If your book is 12×12" you may need to adjust sizing or contact Prodigi support.
+  prodigi: {
+    apiBase: 'https://api.prodigi.com/v4.0',
+    sandboxBase: 'https://api.sandbox.prodigi.com/v4.0',
+    // Update this SKU from your Prodigi dashboard after confirming availability
+    bookSku: 'GLOBAL-PHB-12X12-HC',
+    shippingMethod: 'Budget' as const,
+  },
+
+  // === PRINTIQUE (Heirloom Edition) ===
+  // Printique does not have a public API. Heirloom orders follow a manual flow:
+  //   1. Admin downloads the vault PDF
+  //   2. Admin uploads and orders on printique.com
+  //   3. Admin picks up the finished book
+  //   4. Admin hand-delivers to recipient
+  // The admin dashboard flags these orders for manual action.
+  printique: {
+    website: 'https://www.printique.com',
+    notes: 'Museum-quality lay-flat albums. Allow 10–14 business days for production.',
   },
 
   // === COPY & LANGUAGE ===

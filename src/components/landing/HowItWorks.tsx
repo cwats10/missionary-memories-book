@@ -78,17 +78,21 @@ const HowItWorks = () => {
   return (
     <section id="how-it-works" className="py-36 px-6 overflow-hidden">
       <div className="max-w-6xl mx-auto">
-        {/* Section title with gold accent */}
+        {/* Eyebrow */}
+        <p className="font-serif-text text-gold text-xs tracking-[0.25em] uppercase text-center mb-5">
+          The Process
+        </p>
+
         <h2 className="font-serif text-3xl md:text-4xl text-center mb-4 tracking-wide">
-          How It Works
+          From Invitation to Heirloom
         </h2>
-        
+
         <div className="flex justify-center mb-8">
           <div className="w-12 h-px bg-gold/50" />
         </div>
-        
+
         <p className="font-serif-text text-muted-foreground text-lg text-center max-w-2xl mx-auto mb-20">
-          Five simple steps from first invitation to treasured keepsake.
+          Five considered steps — each designed to gather the voices that matter most.
         </p>
 
         {/* Carousel viewport */}
