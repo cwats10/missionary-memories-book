@@ -184,7 +184,7 @@ export const CheckoutDialog = ({
                       <div className="flex items-baseline gap-2">
                         <p className="font-serif text-xl">${standardTotal}</p>
                         <p className="text-sm text-muted-foreground">
-                          (${pricing.printedBase} base + {pageCount} pages × ${pricing.perPage})
+                          Flat rate — all page counts included
                         </p>
                       </div>
                     </div>
@@ -210,7 +210,7 @@ export const CheckoutDialog = ({
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">
-                        Museum-quality lay-flat album printed by Printique — hand-delivered personally
+                        Museum-quality lay-flat album, cloth bound or vegan leather cover, printed by Printique — hand-delivered personally
                       </p>
                       <div className="flex items-start gap-1 mb-2">
                         <Info className="h-3 w-3 text-muted-foreground/60 mt-0.5 flex-shrink-0" />
@@ -221,7 +221,7 @@ export const CheckoutDialog = ({
                       <div className="flex items-baseline gap-2">
                         <p className="font-serif text-xl">${heirloomTotal}</p>
                         <p className="text-sm text-muted-foreground">
-                          (${pricing.heirloomBase} base + {pageCount} pages × ${pricing.heirloomPerPage})
+                          Flat rate — all page counts included
                         </p>
                       </div>
                     </div>

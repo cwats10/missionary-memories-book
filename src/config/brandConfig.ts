@@ -101,11 +101,11 @@ export const brandConfig = {
     // Digital PDF
     pdfOnly: 40,
     // Standard Print — fulfilled automatically via Prodigi
-    printedBase: 60,
-    perPage: 1,
+    printedBase: 149,
+    perPage: 0,
     // Heirloom Edition — fulfilled manually via Printique, hand-delivered
-    heirloomBase: 150,
-    heirloomPerPage: 2,
+    heirloomBase: 449,
+    heirloomPerPage: 0,
     // Referral program
     referralDiscount: 15,
     referralCredit: 15,
