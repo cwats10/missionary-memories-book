@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useVault } from '@/hooks/useVault';
@@ -12,6 +12,7 @@ import { InviteDialog } from '@/components/vault/InviteDialog';
 import { InviteManagerDialog } from '@/components/vault/InviteManagerDialog';
 import { BookPreview } from '@/components/vault/BookPreview';
 import { CheckoutDialog } from '@/components/vault/CheckoutDialog';
+import type { OrderFormat } from '@/components/vault/CheckoutDialog';
 import { DownloadPdfButton } from '@/components/vault/DownloadPdfButton';
 import { TitlePageCard } from '@/components/vault/TitlePageCard';
 import { ThankYouDialog } from '@/components/vault/ThankYouDialog';
@@ -25,7 +26,7 @@ import { ContributorRemindersDialog } from '@/components/vault/ContributorRemind
 import { SubmitBookDialog } from '@/components/vault/SubmitBookDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { BookOpen, Settings, ChevronRight, Lock, CheckCircle2, Package } from 'lucide-react';
+import { BookOpen, Settings, ChevronRight, Lock, CheckCircle2, Package, Gem } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -67,6 +68,21 @@ const VaultDetail = () => {
   const [showShare, setShowShare] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Track the order format the owner chose at checkout (PDF, Standard, Heirloom).
+  // Persisted in localStorage so it survives page refreshes.
+  const orderFormatKey = id ? `vault-format-${id}` : null;
+  const [orderFormat, setOrderFormat] = useState<OrderFormat | null>(() => {
+    if (!id) return null;
+    return (localStorage.getItem(`vault-format-${id}`) as OrderFormat | null) ?? null;
+  });
+
+  // Keep orderFormat in sync if vault id changes
+  useEffect(() => {
+    if (!id) return;
+    const saved = localStorage.getItem(`vault-format-${id}`) as OrderFormat | null;
+    setOrderFormat(saved);
+  }, [id]);
 
   const isOwner = userRole === 'owner';
   const isManager = userRole === 'coowner';
@@ -232,8 +248,8 @@ const VaultDetail = () => {
     }
   };
 
-  const handleSubmitBook = async () => {
-    const result = await updateVault({ status: 'submitted' });
+  const handleSubmitBook = async (status: string) => {
+    const result = await updateVault({ status });
     if (!result.error) {
       await refetchVault();
     }
@@ -374,8 +390,13 @@ const VaultDetail = () => {
                       vaultTitle={vault.recipient_name}
                       pageCount={pages.length}
                       mode="activate"
-                      onOrderComplete={async () => {
-                        const result = await updateVault({ status: 'purchased' });
+                      onOrderComplete={async (fmt) => {
+                        // Persist format so SubmitBookDialog knows which track to use
+                        if (orderFormatKey) localStorage.setItem(orderFormatKey, fmt);
+                        setOrderFormat(fmt);
+                        // Heirloom gets its own status so admin can distinguish it
+                        const newStatus = fmt === 'heirloom' ? 'purchased_heirloom' : 'purchased';
+                        const result = await updateVault({ status: newStatus });
                         if (!result.error) await refetchVault();
                       }}
                     />
@@ -386,8 +407,8 @@ const VaultDetail = () => {
                 </div>
               )}
 
-              {/* STATE 2: ACTIVE (purchased) — collecting contributions */}
-              {vault.status === 'purchased' && (
+              {/* STATE 2: ACTIVE (purchased / purchased_heirloom) — collecting contributions */}
+              {(vault.status === 'purchased' || vault.status === 'purchased_heirloom') && (
                 <div className="mb-10 pb-10 border-b border-border space-y-6">
                   {/* Sharing row */}
                   <div>
@@ -439,7 +460,7 @@ const VaultDetail = () => {
                       <SubmitBookDialog
                         vaultId={vault.id}
                         approvedPageCount={approvedCount}
-                        orderType={null}
+                        orderFormat={orderFormat}
                         disabled={approvedCount === 0}
                         disabledReason="Approve at least one page before submitting"
                         onSubmit={handleSubmitBook}
@@ -449,40 +470,68 @@ const VaultDetail = () => {
                 </div>
               )}
 
-              {/* STATE 3: SUBMITTED / IN PRODUCTION / SHIPPED */}
-              {['submitted', 'in_production', 'shipped'].includes(vault.status) && (
+              {/* STATE 3: SUBMITTED / IN PRODUCTION / SHIPPED / DELIVERED */}
+              {['submitted', 'submitted_heirloom', 'in_production', 'shipped', 'delivered'].includes(vault.status) && (() => {
+                const isHeirloom = vault.status === 'submitted_heirloom' || orderFormat === 'heirloom';
+                const standardStages = ['submitted', 'in_production', 'shipped'] as const;
+                const heirloomStages = ['submitted_heirloom', 'in_production', 'delivered'] as const;
+                const stages = isHeirloom ? heirloomStages : standardStages;
+                const stageLabels: Record<string, string> = {
+                  submitted: 'Submitted', submitted_heirloom: 'Submitted',
+                  in_production: 'Printing', shipped: 'Shipped', delivered: 'Delivered',
+                };
+                return (
                 <div className="mb-10 pb-10 border-b border-border">
-                  <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-6 flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                      {vault.status === 'shipped' ? (
-                        <Package className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      )}
+                  <div className={cn(
+                    'rounded-xl border p-6 flex items-start gap-4',
+                    isHeirloom
+                      ? 'border-gold/30 bg-gold/5'
+                      : 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20'
+                  )}>
+                    <div className={cn(
+                      'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+                      isHeirloom ? 'bg-gold/15' : 'bg-green-100 dark:bg-green-900/30'
+                    )}>
+                      {isHeirloom
+                        ? <Gem className="h-5 w-5 text-gold" />
+                        : vault.status === 'shipped'
+                          ? <Package className="h-5 w-5 text-green-600" />
+                          : <CheckCircle2 className="h-5 w-5 text-green-600" />}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-serif text-base mb-1">
                         {vault.status === 'submitted' && 'Book Submitted for Printing'}
+                        {vault.status === 'submitted_heirloom' && 'Heirloom Edition Submitted'}
                         {vault.status === 'in_production' && 'Book In Production'}
                         {vault.status === 'shipped' && 'Book Shipped!'}
+                        {vault.status === 'delivered' && 'Book Delivered!'}
                       </h3>
                       <p className="font-serif-text text-sm text-muted-foreground leading-relaxed">
-                        {vault.status === 'submitted' && 'Your book is in the fulfillment queue. The admin team will update the status as it moves through production.'}
-                        {vault.status === 'in_production' && 'Your book is being printed. You'll receive an update when it ships.'}
+                        {vault.status === 'submitted' && 'Your book is in the Prodigi queue. The admin team will confirm production status.'}
+                        {vault.status === 'submitted_heirloom' && 'Our team will order your Heirloom Edition from Printique and arrange hand delivery.'}
+                        {vault.status === 'in_production' && 'Your book is being printed. You\'ll receive an update when it\'s ready.'}
                         {vault.status === 'shipped' && 'Your book is on its way! Check your email for tracking information.'}
+                        {vault.status === 'delivered' && 'Your heirloom book has been delivered. Cherish it forever.'}
                       </p>
                       {/* Fulfillment progress */}
                       <div className="flex items-center gap-3 mt-3 font-serif-text text-xs">
-                        {[['submitted', 'Submitted'], ['in_production', 'Printing'], ['shipped', 'Shipped']].map(([s, label], i, arr) => {
-                          const statuses = ['submitted', 'in_production', 'shipped'];
-                          const done = statuses.indexOf(vault.status) >= statuses.indexOf(s);
+                        {stages.map((s, i) => {
+                          const done = stages.indexOf(vault.status as typeof stages[number]) >= i;
                           return (
                             <div key={s} className="flex items-center gap-3">
-                              <div className={cn('flex items-center gap-1.5', done ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground/50')}>
-                                <div className={cn('w-2 h-2 rounded-full', done ? 'bg-green-600' : 'bg-muted-foreground/30')} />
-                                {label}
+                              <div className={cn('flex items-center gap-1.5',
+                                done
+                                  ? isHeirloom ? 'text-gold' : 'text-green-700 dark:text-green-400'
+                                  : 'text-muted-foreground/50'
+                              )}>
+                                <div className={cn('w-2 h-2 rounded-full',
+                                  done
+                                    ? isHeirloom ? 'bg-gold' : 'bg-green-600'
+                                    : 'bg-muted-foreground/30'
+                                )} />
+                                {stageLabels[s]}
                               </div>
-                              {i < arr.length - 1 && <div className="w-6 h-px bg-border" />}
+                              {i < stages.length - 1 && <div className="w-6 h-px bg-border" />}
                             </div>
                           );
                         })}
@@ -506,7 +555,8 @@ const VaultDetail = () => {
                     />
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </>
           )}
 

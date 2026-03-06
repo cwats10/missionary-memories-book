@@ -1,37 +1,54 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { brandConfig } from '@/config/brandConfig';
-import { ShoppingCart, Check, CreditCard, Package, FileDown, Truck, Lock } from 'lucide-react';
+import {
+  ShoppingCart,
+  Check,
+  CreditCard,
+  Package,
+  FileDown,
+  Truck,
+  Lock,
+  Gem,
+  Info,
+} from 'lucide-react';
 import { toast } from 'sonner';
+
+export type OrderFormat = 'pdf' | 'standard' | 'heirloom';
 
 interface CheckoutDialogProps {
   vaultTitle: string;
   pageCount: number;
-  onOrderComplete?: (orderType: 'pdf' | 'print') => void;
-  /** When true: trigger says "Activate Vault", success messaging reflects activation */
+  onOrderComplete?: (orderType: OrderFormat) => void;
+  /** 'activate' = first-time payment gate. 'order' = standalone re-order button. */
   mode?: 'activate' | 'order';
 }
 
-export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 'order' }: CheckoutDialogProps) => {
+export const CheckoutDialog = ({
+  vaultTitle,
+  pageCount,
+  onOrderComplete,
+  mode = 'order',
+}: CheckoutDialogProps) => {
   const isActivate = mode === 'activate';
+
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<'select' | 'shipping' | 'payment' | 'complete'>('select');
-  const [orderType, setOrderType] = useState<'pdf' | 'print'>('print');
+  const [step, setStep] = useState<'select' | 'payment' | 'complete'>('select');
+  const [orderType, setOrderType] = useState<OrderFormat>('standard');
   const [referralCode, setReferralCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [processing, setProcessing] = useState(false);
-  const [shippingInfo, setShippingInfo] = useState({
-    name: '',
-    address: '',
-    city: '',
-    state: '',
-    zip: '',
-    country: 'US',
-  });
   const [referralGenerated] = useState(
     'VAULT' + Math.random().toString(36).substring(2, 8).toUpperCase()
   );
@@ -39,11 +56,15 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
   const { pricing } = brandConfig;
 
   const pdfPrice = pricing.pdfOnly;
-  const printBasePrice = pricing.printedBase;
-  const perPagePrice = pricing.perPage;
-  const printTotal = printBasePrice + (pageCount * perPagePrice);
+  const standardTotal = pricing.printedBase + pageCount * pricing.perPage;
+  const heirloomTotal = pricing.heirloomBase + pageCount * pricing.heirloomPerPage;
 
-  const selectedPrice = orderType === 'pdf' ? pdfPrice : printTotal;
+  const selectedPrice =
+    orderType === 'pdf'
+      ? pdfPrice
+      : orderType === 'heirloom'
+        ? heirloomTotal
+        : standardTotal;
   const finalPrice = Math.max(0, selectedPrice - appliedDiscount);
 
   const handleApplyCode = () => {
@@ -57,8 +78,8 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
 
   const handlePayment = async () => {
     setProcessing(true);
-    // Simulate API call to print-on-demand provider (e.g., Lulu Direct)
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // TODO: integrate Stripe. This is sandbox / demo mode.
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     setProcessing(false);
     await onOrderComplete?.(orderType);
     setStep('complete');
@@ -70,14 +91,11 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
       setStep('select');
       setReferralCode('');
       setAppliedDiscount(0);
-      setShippingInfo({ name: '', address: '', city: '', state: '', zip: '', country: 'US' });
     }, 200);
   };
 
-  const isShippingValid = shippingInfo.name && shippingInfo.address && shippingInfo.city && shippingInfo.state && shippingInfo.zip;
-
   return (
-    <Dialog open={open} onOpenChange={(o) => o ? setOpen(true) : handleClose()}>
+    <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : handleClose())}>
       <DialogTrigger asChild>
         <Button
           size="lg"
@@ -97,7 +115,9 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
           )}
         </Button>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* ─── STEP: SELECT FORMAT ─────────────────────────────────── */}
         {step === 'select' && (
           <>
             <DialogHeader>
@@ -106,15 +126,23 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
               </DialogTitle>
               <DialogDescription>
                 {isActivate
-                  ? 'Choose your book format and pay to unlock sharing. You can collect contributions once activated.'
+                  ? 'Choose your book format and pay to unlock sharing. You'll provide shipping details when you submit the finished book.'
                   : `Choose your preferred format for "${vaultTitle}"`}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="py-4">
-              <RadioGroup value={orderType} onValueChange={(v) => setOrderType(v as 'pdf' | 'print')}>
-                {/* PDF Option */}
-                <div className={`relative border rounded-lg p-4 cursor-pointer transition-all ${orderType === 'pdf' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+            <div className="py-4 space-y-3">
+              <RadioGroup
+                value={orderType}
+                onValueChange={(v) => setOrderType(v as OrderFormat)}
+                className="space-y-3"
+              >
+                {/* PDF */}
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    orderType === 'pdf' ? 'border-primary bg-primary/5' : 'border-border'
+                  }`}
+                >
                   <Label htmlFor="pdf" className="flex items-start gap-4 cursor-pointer">
                     <RadioGroupItem value="pdf" id="pdf" className="mt-1" />
                     <div className="flex-1">
@@ -123,34 +151,77 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
                         <span className="font-medium">Digital PDF</span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        High-resolution, print-ready file — download instantly
+                        300 DPI print-ready file — download instantly after submitting
                       </p>
                       <p className="font-serif text-xl">${pdfPrice}</p>
                     </div>
                   </Label>
                 </div>
 
-                {/* Print Option */}
-                <div className={`relative border rounded-lg p-4 cursor-pointer transition-all mt-3 ${orderType === 'print' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                  <Label htmlFor="print" className="flex items-start gap-4 cursor-pointer">
-                    <RadioGroupItem value="print" id="print" className="mt-1" />
+                {/* Standard Print — Prodigi */}
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    orderType === 'standard' ? 'border-primary bg-primary/5' : 'border-border'
+                  }`}
+                >
+                  <Label htmlFor="standard" className="flex items-start gap-4 cursor-pointer">
+                    <RadioGroupItem value="standard" id="standard" className="mt-1" />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Package className="h-4 w-4 text-primary" />
-                        <span className="font-medium">Printed Hardcover</span>
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Recommended</span>
+                        <span className="font-medium">Standard Hardcover</span>
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                          Recommended
+                        </span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">
-                        Museum-quality hardcover, lay-flat binding, delivered to your door
+                        Hardcover, lay-flat binding — ships directly to recipient
                       </p>
                       <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                         <Truck className="h-3 w-3" />
-                        Ships via Lulu Direct Print-on-Demand · 5–7 business days
+                        Fulfilled by Prodigi · 5–7 business days
                       </p>
                       <div className="flex items-baseline gap-2">
-                        <p className="font-serif text-xl">${printTotal}</p>
+                        <p className="font-serif text-xl">${standardTotal}</p>
                         <p className="text-sm text-muted-foreground">
-                          (${printBasePrice} base + {pageCount} pages × ${perPagePrice})
+                          (${pricing.printedBase} base + {pageCount} pages × ${pricing.perPage})
+                        </p>
+                      </div>
+                    </div>
+                  </Label>
+                </div>
+
+                {/* Heirloom — Printique */}
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    orderType === 'heirloom'
+                      ? 'border-gold bg-gold/5'
+                      : 'border-border'
+                  }`}
+                >
+                  <Label htmlFor="heirloom" className="flex items-start gap-4 cursor-pointer">
+                    <RadioGroupItem value="heirloom" id="heirloom" className="mt-1" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Gem className="h-4 w-4 text-gold" />
+                        <span className="font-medium">Heirloom Edition</span>
+                        <span className="text-xs bg-gold/15 text-gold/90 px-2 py-0.5 rounded border border-gold/20">
+                          Premium
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Museum-quality lay-flat album printed by Printique — hand-delivered personally
+                      </p>
+                      <div className="flex items-start gap-1 mb-2">
+                        <Info className="h-3 w-3 text-muted-foreground/60 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-muted-foreground/80 italic">
+                          Because Printique has no API, your book is ordered manually and hand-delivered. Allow 10–14 business days.
+                        </p>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-serif text-xl">${heirloomTotal}</p>
+                        <p className="text-sm text-muted-foreground">
+                          (${pricing.heirloomBase} base + {pageCount} pages × ${pricing.heirloomPerPage})
                         </p>
                       </div>
                     </div>
@@ -159,7 +230,7 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
               </RadioGroup>
 
               {/* Referral Code */}
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+              <div className="mt-2 p-4 bg-muted/50 rounded-lg">
                 <Label className="text-sm font-medium mb-2 block">Have a referral code?</Label>
                 <div className="flex gap-2">
                   <Input
@@ -181,8 +252,8 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
               </div>
 
               {/* Total */}
-              <div className="mt-6 flex justify-between items-center py-4 border-t border-border">
-                <span className="font-medium">Total</span>
+              <div className="flex justify-between items-center py-4 border-t border-border">
+                <span className="font-medium">Total due today</span>
                 <div className="text-right">
                   {appliedDiscount > 0 && (
                     <span className="text-sm text-muted-foreground line-through mr-2">
@@ -193,94 +264,29 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
                 </div>
               </div>
 
+              {orderType === 'standard' && (
+                <p className="text-xs text-muted-foreground -mt-2 mb-2">
+                  Shipping address is collected at submission time, once your book is finalized.
+                </p>
+              )}
+              {orderType === 'heirloom' && (
+                <p className="text-xs text-muted-foreground -mt-2 mb-2">
+                  Delivery contact is collected at submission time.
+                </p>
+              )}
+
               <Button
-                className="w-full mt-4"
+                className="w-full"
                 size="lg"
-                onClick={() => orderType === 'print' ? setStep('shipping') : setStep('payment')}
+                onClick={() => setStep('payment')}
               >
-                Continue
+                Continue to Payment
               </Button>
             </div>
           </>
         )}
 
-        {step === 'shipping' && (
-          <>
-            <DialogHeader>
-              <DialogTitle className="font-serif text-2xl">Shipping Details</DialogTitle>
-              <DialogDescription>
-                Where should we ship your hardcover book?
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="py-4 space-y-4">
-              <div>
-                <Label className="text-sm">Full Name</Label>
-                <Input
-                  placeholder="Jane Smith"
-                  value={shippingInfo.name}
-                  onChange={(e) => setShippingInfo(s => ({ ...s, name: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Street Address</Label>
-                <Input
-                  placeholder="123 Main St"
-                  value={shippingInfo.address}
-                  onChange={(e) => setShippingInfo(s => ({ ...s, address: e.target.value }))}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-sm">City</Label>
-                  <Input
-                    placeholder="Salt Lake City"
-                    value={shippingInfo.city}
-                    onChange={(e) => setShippingInfo(s => ({ ...s, city: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">State</Label>
-                  <Input
-                    placeholder="UT"
-                    value={shippingInfo.state}
-                    onChange={(e) => setShippingInfo(s => ({ ...s, state: e.target.value }))}
-                    maxLength={2}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-sm">ZIP Code</Label>
-                  <Input
-                    placeholder="84101"
-                    value={shippingInfo.zip}
-                    onChange={(e) => setShippingInfo(s => ({ ...s, zip: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Country</Label>
-                  <Input
-                    placeholder="US"
-                    value={shippingInfo.country}
-                    onChange={(e) => setShippingInfo(s => ({ ...s, country: e.target.value }))}
-                    maxLength={2}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" onClick={() => setStep('select')} className="flex-1">
-                  Back
-                </Button>
-                <Button onClick={() => setStep('payment')} disabled={!isShippingValid} className="flex-1">
-                  Continue to Payment
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-
+        {/* ─── STEP: PAYMENT ─────────────────────────────────────────── */}
         {step === 'payment' && (
           <>
             <DialogHeader>
@@ -294,7 +300,7 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
             <div className="py-4 space-y-4">
               <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  🧪 <strong>Demo Mode:</strong> This is a sandbox checkout. Payment will be processed via Stripe when live.
+                  🧪 <strong>Demo Mode:</strong> Stripe integration is pending. No real charges will occur.
                 </p>
               </div>
 
@@ -318,17 +324,15 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
               {/* Order summary */}
               <div className="py-4 border-t border-border space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{orderType === 'pdf' ? 'Digital PDF' : 'Printed Hardcover'}</span>
+                  <span className="text-muted-foreground">
+                    {orderType === 'pdf'
+                      ? 'Digital PDF'
+                      : orderType === 'heirloom'
+                        ? 'Heirloom Edition (Printique)'
+                        : 'Standard Hardcover (Prodigi)'}
+                  </span>
                   <span>${selectedPrice}</span>
                 </div>
-                {orderType === 'print' && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Truck className="h-3 w-3" /> Shipping (Lulu Direct)
-                    </span>
-                    <span>Included</span>
-                  </div>
-                )}
                 {appliedDiscount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Referral Discount</span>
@@ -342,7 +346,7 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep(orderType === 'print' ? 'shipping' : 'select')} className="flex-1">
+                <Button variant="outline" onClick={() => setStep('select')} className="flex-1">
                   Back
                 </Button>
                 <Button onClick={handlePayment} disabled={processing} className="flex-1 gap-2">
@@ -360,46 +364,50 @@ export const CheckoutDialog = ({ vaultTitle, pageCount, onOrderComplete, mode = 
           </>
         )}
 
+        {/* ─── STEP: COMPLETE ─────────────────────────────────────────── */}
         {step === 'complete' && (
-          <>
-            <div className="py-8 text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="h-8 w-8 text-green-600" />
-              </div>
-              <DialogTitle className="font-serif text-2xl mb-2">
-                {isActivate ? 'Vault Activated!' : 'Order Confirmed!'}
-              </DialogTitle>
-              <DialogDescription className="mb-6">
-                {isActivate
-                  ? 'Your vault is active. Share your invite link to start collecting memories.'
-                  : orderType === 'pdf'
-                    ? 'Your PDF is ready to download from the vault page.'
-                    : `Your hardcover book has been sent to Lulu Direct for printing. It will ship to ${shippingInfo.name} within 5–7 business days.`}
-              </DialogDescription>
+          <div className="py-8 text-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="h-8 w-8 text-green-600" />
+            </div>
+            <DialogTitle className="font-serif text-2xl mb-2">
+              {isActivate ? 'Vault Activated!' : 'Order Confirmed!'}
+            </DialogTitle>
+            <DialogDescription className="mb-6 mx-auto max-w-sm">
+              {isActivate
+                ? orderType === 'heirloom'
+                  ? 'Your vault is active with the Heirloom Edition. Share your invite link to start collecting memories — delivery details are collected when you submit the finished book.'
+                  : 'Your vault is active. Share your invite link to start collecting memories. Shipping details are collected when you submit the finished book.'
+                : 'Your payment is confirmed. Complete your book and submit it for printing.'}
+            </DialogDescription>
 
-              <div className="p-4 bg-muted/50 rounded-lg text-left mb-6">
-                <p className="text-sm font-medium mb-1">Your Referral Code</p>
-                <div className="flex items-center gap-2">
-                  <code className="bg-background px-3 py-2 rounded border border-border font-mono text-sm">
-                    {referralGenerated}
-                  </code>
-                  <Button variant="ghost" size="sm" onClick={() => {
+            <div className="p-4 bg-muted/50 rounded-lg text-left mb-6">
+              <p className="text-sm font-medium mb-1">Your Referral Code</p>
+              <div className="flex items-center gap-2">
+                <code className="bg-background px-3 py-2 rounded border border-border font-mono text-sm">
+                  {referralGenerated}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
                     navigator.clipboard.writeText(referralGenerated);
                     toast.success('Code copied!');
-                  }}>
-                    Copy
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Share this code to give friends ${pricing.referralDiscount} off — you'll earn ${pricing.referralCredit} credit!
-                </p>
+                  }}
+                >
+                  Copy
+                </Button>
               </div>
-
-              <Button onClick={handleClose} className="w-full">
-                Done
-              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Share this code to give friends ${pricing.referralDiscount} off — you'll earn $
+                {pricing.referralCredit} credit!
+              </p>
             </div>
-          </>
+
+            <Button onClick={handleClose} className="w-full">
+              Done
+            </Button>
+          </div>
         )}
       </DialogContent>
     </Dialog>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AdminVault } from '@/hooks/useAdmin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { brandConfig } from '@/config/brandConfig';
 import {
   Table,
   TableBody,
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, RefreshCw, ExternalLink } from 'lucide-react';
+import { Search, RefreshCw, ExternalLink, Gem, HandHeart } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -31,20 +32,23 @@ interface AdminVaultsTabProps {
 
 type StatusFilter = 'all' | 'draft' | 'purchased' | 'submitted' | 'in_production' | 'shipped';
 
-const FULFILLMENT_STATUSES: { value: string; label: string }[] = [
+const FULFILLMENT_STATUSES: { value: string; label: string; group?: string }[] = [
   { value: 'draft', label: 'Draft' },
-  { value: 'purchased', label: 'Active' },
-  { value: 'submitted', label: 'Submitted' },
+  { value: 'purchased', label: 'Active (Standard)' },
+  { value: 'purchased_heirloom', label: 'Active (Heirloom)' },
+  { value: 'submitted', label: 'Submitted → Prodigi' },
+  { value: 'submitted_heirloom', label: 'Submitted → Printique ⚑' },
   { value: 'in_production', label: 'In Production' },
   { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered (Heirloom)' },
 ];
 
 const STATUS_FILTER_TABS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'draft', label: 'Draft' },
   { key: 'purchased', label: 'Active' },
-  { key: 'submitted', label: 'Submitted' },
-  { key: 'in_production', label: 'In Production' },
+  { key: 'submitted', label: 'Prodigi Queue' },
+  { key: 'in_production', label: 'Printing' },
   { key: 'shipped', label: 'Shipped' },
 ];
 
@@ -54,12 +58,18 @@ function getStatusBadge(status: string) {
       return { label: 'Draft', className: 'bg-muted text-muted-foreground' };
     case 'purchased':
       return { label: 'Active', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' };
+    case 'purchased_heirloom':
+      return { label: 'Active · Heirloom', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' };
     case 'submitted':
-      return { label: 'Submitted', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
+      return { label: 'Prodigi Queue', className: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' };
+    case 'submitted_heirloom':
+      return { label: '⚑ Printique Queue', className: 'bg-gold/20 text-amber-800 dark:text-amber-300 border border-gold/30' };
     case 'in_production':
       return { label: 'In Production', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' };
     case 'shipped':
       return { label: 'Shipped', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+    case 'delivered':
+      return { label: 'Delivered ✓', className: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' };
     default:
       return { label: status, className: 'bg-muted text-muted-foreground' };
   }
@@ -90,12 +100,16 @@ export const AdminVaultsTab = ({ vaults, onRefresh, onUpdateVaultStatus }: Admin
     setUpdatingId(null);
   };
 
-  // Pipeline counts for the summary row
+  // Pipeline counts for the summary row — group purchased+purchased_heirloom, submitted+submitted_heirloom
   const pipeline = ['draft', 'purchased', 'submitted', 'in_production', 'shipped'];
   const pipelineCounts = pipeline.map((s) => ({
     status: s,
     badge: getStatusBadge(s),
-    count: vaults.filter((v) => v.status === s).length,
+    count: s === 'purchased'
+      ? vaults.filter(v => v.status === 'purchased' || v.status === 'purchased_heirloom').length
+      : s === 'submitted'
+        ? vaults.filter(v => v.status === 'submitted' || v.status === 'submitted_heirloom').length
+        : vaults.filter(v => v.status === s).length,
   }));
 
   return (
@@ -113,6 +127,67 @@ export const AdminVaultsTab = ({ vaults, onRefresh, onUpdateVaultStatus }: Admin
           Refresh
         </Button>
       </div>
+
+      {/* ⚑ Heirloom Action Queue */}
+      {(() => {
+        const heirloomQueue = vaults.filter(v => v.status === 'submitted_heirloom');
+        if (!heirloomQueue.length) return null;
+        return (
+          <div className="rounded-xl border-2 border-gold/30 bg-gold/5 p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Gem className="h-4 w-4 text-gold" />
+              <h3 className="font-serif text-base tracking-wide">
+                Heirloom Queue — Manual Action Required
+              </h3>
+              <span className="text-xs px-2 py-0.5 bg-gold/20 text-amber-800 rounded-full border border-gold/30">
+                {heirloomQueue.length} pending
+              </span>
+            </div>
+            <p className="font-serif-text text-xs text-muted-foreground">
+              These orders require you to manually place a Printique order, then hand-deliver the finished book.
+              Download the PDF → order on{' '}
+              <a href={brandConfig.printique.website} target="_blank" rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors">
+                printique.com
+              </a>{' '}
+              → mark as In Production when ordered → mark as Delivered when handed off.
+            </p>
+            <div className="space-y-2">
+              {heirloomQueue.map(vault => (
+                <div key={vault.id} className="flex items-center justify-between gap-4 p-3 bg-background/60 rounded-lg border border-gold/20">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-serif-text text-sm font-medium truncate">{vault.recipient_name}</p>
+                    <p className="font-serif-text text-xs text-muted-foreground truncate">{vault.owner_email}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 text-xs h-7 border-gold/30 hover:border-gold/60"
+                      onClick={() => navigate(`/vault/${vault.id}`)}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Open Vault
+                    </Button>
+                    {onUpdateVaultStatus && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 text-xs h-7"
+                        onClick={() => onUpdateVaultStatus(vault.id, 'in_production')}
+                        disabled={updatingId === vault.id}
+                      >
+                        <HandHeart className="h-3 w-3" />
+                        Mark Ordered
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Fulfillment pipeline summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
